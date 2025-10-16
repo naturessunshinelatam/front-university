@@ -2,8 +2,7 @@
   "functions": {
     "api/**/*.js": {
       "memory": 1024,
-      "maxDuration": 10,
-      "maxRequestBodySize": "20mb"
+      "maxDuration": 10
     }
   },
   "rewrites": [
