@@ -16,6 +16,26 @@ import {
 export default function Home() {
   const { selectedCountry } = useCountry();
   
+  /**
+   * Convierte el nombre de la categoría en un slug amigable para URL
+   */
+  const createSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+      .replace(/[^a-z0-9]+/g, '-') // Reemplazar espacios y caracteres especiales con guiones
+      .replace(/^-+|-+$/g, ''); // Eliminar guiones al inicio y final
+  };
+
+  /**
+   * Crea la URL de la categoría solo con el slug
+   */
+  const getCategoryUrl = (categoryId: string, categoryName: string): string => {
+    const slug = createSlug(categoryName);
+    return `/content/${slug}`;
+  };
+  
   // Usar hook de contenido completo (TODO desde API en tiempo real)
   const { 
     content,
@@ -124,7 +144,7 @@ export default function Home() {
                     return (
                       <Link
                         key={category.id}
-                        to={`/content/${category.id}`}
+                        to={getCategoryUrl(category.id, category.categoryName)}
                         className="group glass border border-white/30 text-white px-3 sm:px-4 py-4 sm:py-5 rounded-xl font-bold text-sm sm:text-base hover:bg-white hover:text-[#124C45] hover:shadow-2xl hover:border-white/50 transition-all duration-500 transform hover:scale-110 hover:-translate-y-2 shadow-xl relative overflow-hidden"
                       >
                         <span className="relative flex flex-col items-center justify-center space-y-1 sm:space-y-2">
@@ -314,7 +334,7 @@ export default function Home() {
                     
                     {/* Botón de acción */}
                     <Link
-                      to={`/content/${category.id}`}
+                      to={getCategoryUrl(category.id, category.categoryName)}
                       className="mt-auto inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-[#124C45] to-[#023D4F] text-white text-sm font-medium rounded-lg hover:from-[#0f3d37] hover:to-[#01303e] transition-all duration-300 group-hover:shadow-lg"
                     >
                       <span>Explorar</span>
@@ -376,7 +396,7 @@ export default function Home() {
               return (
                 <div key={category.id} className="flex justify-center">
                   <Link
-                    to={`/content/${category.id}`}
+                    to={getCategoryUrl(category.id, category.categoryName)}
                     className="group bg-white border-2 border-gray-200 text-[#124C45] px-8 py-6 rounded-3xl font-semibold text-lg hover:border-[#124C45] hover:shadow-xl transition-all duration-300 transform hover:scale-105 min-w-[200px] flex flex-col items-center space-y-2"
                   >
                     <IconComponent className="w-5 h-5" />
