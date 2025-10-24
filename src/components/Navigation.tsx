@@ -51,6 +51,26 @@ export default function Navigation() {
   console.log('🔍 Navigation - Total categorías API:', categories.length);
   console.log('🔍 Navigation - Categorías con contenido:', availableCategories.length);
 
+  /**
+   * Convierte el nombre de la categoría en un slug amigable para URL
+   */
+  const createSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Eliminar acentos
+      .replace(/[^a-z0-9]+/g, '-') // Reemplazar espacios y caracteres especiales con guiones
+      .replace(/^-+|-+$/g, ''); // Eliminar guiones al inicio y final
+  };
+
+  /**
+   * Crea la URL de la categoría solo con el slug
+   */
+  const getCategoryUrl = (category: { id: string; name: string }): string => {
+    const slug = createSlug(category.name);
+    return `/content/${slug}`;
+  };
+
   const getIconForCategory = (iconName: string) => {
     // Mapeo de iconos
     type IconComponent = React.ComponentType<{ className?: string }>;
@@ -121,7 +141,7 @@ export default function Navigation() {
                   return (
                     <div key={category.id} className="flex">
                       <Link
-                        to={`/content/${category.id}`}
+                        to={getCategoryUrl(category)}
                         className="flex items-center space-x-1 px-2 py-2 rounded-lg text-gray-700 hover:text-[#124C45] hover:bg-[#124C45]/5 transition-all duration-200 whitespace-nowrap text-sm"
                       >
                         <IconComponent className="w-3 h-3" />
@@ -150,7 +170,7 @@ export default function Navigation() {
                           return (
                             <Link
                               key={category.id}
-                              to={`/content/${category.id}`}
+                              to={getCategoryUrl(category)}
                               onClick={() => setIsCategoriesOpen(false)}
                               className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-[#124C45] hover:bg-[#124C45]/5 transition-colors text-sm"
                             >
@@ -321,7 +341,7 @@ export default function Navigation() {
                   return (
                     <Link
                       key={category.id}
-                      to={`/content/${category.id}`}
+                      to={getCategoryUrl(category)}
                       onClick={() => setIsMenuOpen(false)}
                       className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-[#124C45] hover:bg-[#124C45]/5 transition-colors text-sm group"
                       title={category.name}
