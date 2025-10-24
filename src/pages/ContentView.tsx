@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCountry } from '../contexts/CountryContext';
 import { usePublicContentAll, type ContentItem as ApiContentItem } from '../hooks/usePublicContentAll';
@@ -14,8 +14,14 @@ import {
   X,
   Loader2,
   AlertCircle,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Download,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle
 } from 'lucide-react';
+import ImagePreviewModal from '../components/ImagePreviewModal';
 
 interface ContentItem {
   id: string;
@@ -40,7 +46,7 @@ interface ContentSection {
 }
 
 export default function ContentView() {
-  const { category } = useParams();
+  const { category: categorySlug } = useParams();
   const { selectedCountry } = useCountry();
   
   // Usar hook de contenido completo (TODO desde API en tiempo real)
@@ -50,15 +56,42 @@ export default function ContentView() {
     sections,
     loading,
     error,
-    getCategoryById,
     getSectionsByCategory,
     getContentBySection
   } = usePublicContentAll(selectedCountry.code);
   
   const [selectedVideo, setSelectedVideo] = useState<ContentItem | null>(null);
+  const [downloadingImageId, setDownloadingImageId] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<ContentItem | null>(null);
+  const [downloadedImageId, setDownloadedImageId] = useState<string | null>(null);
+  
+  // Estado para controlar secciones expandidas/contraídas
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+  const [allCollapsed, setAllCollapsed] = useState(false);
 
-  // Obtener información de la categoría desde API
-  const currentCategory = getCategoryById(category || '');
+  /**
+   * Convierte un texto en slug (igual que en Navigation y Home)
+   */
+  const createSlug = (name: string): string => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  };
+
+  /**
+   * Busca la categoría por slug (nombre convertido)
+   */
+  const findCategoryBySlug = (slug: string | undefined) => {
+    if (!slug) return null;
+    return categories.find(cat => createSlug(cat.categoryName) === slug);
+  };
+
+  // Obtener información de la categoría desde API usando el slug
+  const currentCategory = findCategoryBySlug(categorySlug);
+  const category = currentCategory?.id || '';
   
   // Obtener secciones de esta categoría desde API
   const availableSections = getSectionsByCategory(category || '');
@@ -137,7 +170,8 @@ export default function ContentView() {
    * Obtiene el título de la categoría
    */
   const getCategoryTitle = () => {
-    return currentCategory?.categoryName || category || 'Categoría';
+    if (loading) return 'Cargando...';
+    return currentCategory?.categoryName || 'Categoría';
   };
 
   /**
@@ -167,10 +201,52 @@ export default function ContentView() {
   const handleContentClick = (item: ContentItem) => {
     if (item.type === 'youtube' || item.type === 'video') {
       setSelectedVideo(item);
+    } else if (item.type === 'image') {
+      // Para imágenes, abrir el modal de previsualización
+      setPreviewImage(item);
     } else {
       window.open(item.url, '_blank');
     }
   };
+
+  /**
+   * Alterna el estado de colapso de una sección individual
+   */
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId);
+      } else {
+        newSet.add(sectionId);
+      }
+      return newSet;
+    });
+  };
+
+  /**
+   * Contrae o expande todas las secciones
+   */
+  const toggleAllSections = () => {
+    if (allCollapsed) {
+      // Expandir todas
+      setCollapsedSections(new Set());
+      setAllCollapsed(false);
+    } else {
+      // Contraer todas
+      const allSectionIds = new Set(sectionsWithContent.map(s => s.id));
+      setCollapsedSections(allSectionIds);
+      setAllCollapsed(true);
+    }
+  };
+
+  /**
+   * Verifica si una sección está contraída
+   */
+  const isSectionCollapsed = (sectionId: string) => {
+    return collapsedSections.has(sectionId);
+  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
@@ -197,9 +273,32 @@ export default function ContentView() {
                   </div>
                 )}
               </div>
-              <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 mb-1 sm:mb-2 leading-tight">
-                {getCategoryTitle()}
-              </h1>
+              <div className="flex items-center justify-between gap-2 mb-1 sm:mb-2">
+                <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight flex-1">
+                  {getCategoryTitle()}
+                </h1>
+                
+                {/* Botón "Contraer Todo" - Solo visible en móviles (< 768px) */}
+                {!loading && sectionsWithContent.length > 0 && (
+                  <button
+                    onClick={toggleAllSections}
+                    className="md:hidden flex items-center gap-1 px-3 py-1.5 bg-[#124C45] text-white text-xs font-medium rounded-lg hover:bg-[#0f3d37] transition-colors shadow-sm flex-shrink-0"
+                  >
+                    {allCollapsed ? (
+                      <>
+                        <ChevronDown className="w-3 h-3" />
+                        <span>Expandir</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronUp className="w-3 h-3" />
+                        <span>Contraer</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+              
               <p className="text-sm sm:text-base md:text-lg text-gray-600 flex items-center space-x-1 sm:space-x-2 hidden sm:flex">
                 <span className="text-base sm:text-lg md:text-xl flex-shrink-0">{selectedCountry.flag}</span>
                 <span className="break-words">Contenido para {selectedCountry.name}</span>
@@ -244,12 +343,36 @@ export default function ContentView() {
                 key={contentSection.id} 
                 className="bg-white rounded-lg sm:rounded-xl shadow-md hover:shadow-lg transition-all duration-300 border border-gray-100 hover:border-[#124C45]/20 overflow-hidden group w-full flex flex-col min-h-[300px] sm:min-h-[350px]"
               >
-                {/* Card Header */}
-                <div className="p-3 sm:p-4 md:p-5 border-b border-gray-100 flex-shrink-0">
+                {/* Card Header - Clickeable en móviles y tablets */}
+                <div 
+                  className="p-3 sm:p-4 md:p-5 border-b border-gray-100 flex-shrink-0 lg:cursor-default cursor-pointer lg:hover:bg-transparent hover:bg-gray-50 transition-colors"
+                  onClick={() => {
+                    // Solo funciona en móviles y tablets (< 1024px)
+                    if (window.innerWidth < 1024) {
+                      toggleSection(contentSection.id);
+                    }
+                  }}
+                >
                   <div className="flex items-start justify-between mb-2 sm:mb-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-md flex-shrink-0">
                       <span className="text-lg sm:text-xl">{getSectionIcon(contentSection.id)}</span>
                     </div>
+                    
+                    {/* Botón de colapso - Solo visible en móviles y tablets (< 1024px) */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSection(contentSection.id);
+                      }}
+                      className="lg:hidden p-1.5 hover:bg-gray-200 rounded-lg transition-colors"
+                      aria-label={isSectionCollapsed(contentSection.id) ? "Expandir sección" : "Contraer sección"}
+                    >
+                      {isSectionCollapsed(contentSection.id) ? (
+                        <ChevronDown className="w-4 h-4 text-gray-600" />
+                      ) : (
+                        <ChevronUp className="w-4 h-4 text-gray-600" />
+                      )}
+                    </button>
                   </div>
                   
                   <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-[#124C45] transition-colors leading-tight line-clamp-2">
@@ -258,46 +381,133 @@ export default function ContentView() {
                   <p className="text-gray-600 text-xs sm:text-sm leading-relaxed line-clamp-2">
                     {contentSection.description}
                   </p>
+                  
+                  {/* Contador de contenidos cuando está contraído */}
+                  {isSectionCollapsed(contentSection.id) && (
+                    <div className="mt-2 text-xs text-gray-500 font-medium">
+                      {contentSection.items.length} contenido{contentSection.items.length !== 1 ? 's' : ''}
+                    </div>
+                  )}
                 </div>
 
-                {/* Content List */}
+                {/* Content List - Se oculta cuando está contraído */}
+                {!isSectionCollapsed(contentSection.id) && (
                 <div className="p-3 sm:p-4 md:p-5 flex-1 flex flex-col">
                   <div className="space-y-1 sm:space-y-2 mb-3 sm:mb-4 flex-1">
                     {contentSection.items.map((item) => {
                       const IconComponent = getIcon(item.type);
                       return (
-                        <button
-                          key={item.id} 
-                          onClick={() => handleContentClick(item)}
-                          className="w-full flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-50 rounded-md sm:rounded-lg hover:bg-gray-100 transition-colors group/item cursor-pointer text-left"
+                        <div
+                          key={item.id}
+                          className="w-full flex items-start space-x-2 sm:space-x-3 p-2 sm:p-3 bg-gray-50 rounded-md sm:rounded-lg hover:bg-gray-100 transition-colors group/item"
                         >
-                          <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            item.type === 'pdf' || item.type === 'file' ? 'bg-red-100 text-red-600' :
-                            item.type === 'youtube' || item.type === 'video' ? 'bg-red-100 text-red-600' :
-                            'bg-blue-100 text-blue-600'
-                          }`}>
-                            <IconComponent className="w-3 h-3 sm:w-4 sm:h-4" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs sm:text-sm font-medium text-gray-900 group-hover/item:text-[#124C45] transition-colors leading-tight mb-1 line-clamp-2">
-                              {item.title}
-                            </p>
-                            <div className="flex items-center space-x-1 sm:space-x-2 text-xs text-gray-500">
-                              {item.duration && (
-                                <div className="flex items-center space-x-1">
-                                  <Clock className="w-2 h-2 sm:w-3 sm:h-3 flex-shrink-0" />
-                                  <span>{item.duration}</span>
-                                </div>
-                              )}
-                              {item.size && item.type !== 'video' && item.type !== 'youtube' && (
-                                <div className="flex items-center space-x-1">
-                                  <FileText className="w-2 h-2 sm:w-3 sm:h-3 flex-shrink-0" />
-                                  <span>{item.size}</span>
-                                </div>
-                              )}
+                          <button
+                            onClick={() => handleContentClick(item)}
+                            className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0 cursor-pointer text-left"
+                          >
+                            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center flex-shrink-0 ${
+                              item.type === 'pdf' || item.type === 'file' ? 'bg-red-100 text-red-600' :
+                              item.type === 'youtube' || item.type === 'video' ? 'bg-red-100 text-red-600' :
+                              item.type === 'image' ? 'bg-purple-100 text-purple-600' :
+                              'bg-blue-100 text-blue-600'
+                            }`}>
+                              <IconComponent className="w-3 h-3 sm:w-4 sm:h-4" />
                             </div>
-                          </div>
-                        </button>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs sm:text-sm font-medium text-gray-900 group-hover/item:text-[#124C45] transition-colors leading-tight mb-1 line-clamp-2">
+                                {item.title}
+                              </p>
+                              <div className="flex items-center space-x-1 sm:space-x-2 text-xs text-gray-500">
+                                {item.duration && (
+                                  <div className="flex items-center space-x-1">
+                                    <Clock className="w-2 h-2 sm:w-3 sm:h-3 flex-shrink-0" />
+                                    <span>{item.duration}</span>
+                                  </div>
+                                )}
+                                {item.size && item.type !== 'video' && item.type !== 'youtube' && (
+                                  <div className="flex items-center space-x-1">
+                                    <FileText className="w-2 h-2 sm:w-3 sm:h-3 flex-shrink-0" />
+                                    <span>{item.size}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </button>
+                          
+                          {/* Botones para imágenes */}
+                          {item.type === 'image' && (() => {
+                            // Extraer el ID del archivo de la URL
+                            const urlParts = item.url.split('/');
+                            const fileNameWithExtension = urlParts[urlParts.length - 1];
+                            const fileId = fileNameWithExtension.split('_')[0];
+                            const downloadUrl = `/api/proxy?path=Hostinger/getImage/${fileId}`;
+                            const isDownloading = downloadingImageId === item.id;
+                            
+                            return (
+                              <div className="flex gap-1 flex-shrink-0">
+                                {/* Botón de Vista Previa */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewImage(item);
+                                  }}
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-gradient-to-r from-[#124C45] to-[#023D4F] hover:from-[#0f3d37] hover:to-[#012d3a] text-white flex items-center justify-center transition-all shadow-sm hover:shadow-md"
+                                  title="Ver imagen"
+                                >
+                                  <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </button>
+                                
+                                {/* Botón de Descarga */}
+                                <button
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    setDownloadingImageId(item.id);
+                                    
+                                    try {
+                                      const token = localStorage.getItem('authToken');
+                                      const response = await fetch(downloadUrl, {
+                                        headers: {
+                                          'Authorization': token ? `Bearer ${token}` : ''
+                                        }
+                                      });
+                                      
+                                      if (response.ok) {
+                                        const blob = await response.blob();
+                                        const url = window.URL.createObjectURL(blob);
+                                        const link = document.createElement('a');
+                                        link.href = url;
+                                        link.download = `${item.title}.png`;
+                                        document.body.appendChild(link);
+                                        link.click();
+                                        document.body.removeChild(link);
+                                        window.URL.revokeObjectURL(url);
+                                        
+                                        setDownloadedImageId(item.id);
+                                        setTimeout(() => {
+                                          setDownloadedImageId(null);
+                                        }, 3000);
+                                      }
+                                    } catch (error) {
+                                      console.error('Error al descargar:', error);
+                                    } finally {
+                                      setDownloadingImageId(null);
+                                    }
+                                  }}
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-[#124C45] hover:bg-[#0f3d37] text-white flex items-center justify-center transition-colors shadow-sm hover:shadow-md relative"
+                                  title={isDownloading ? "Descargando..." : downloadedImageId === item.id ? "¡Descargado!" : "Descargar imagen"}
+                                >
+                                  {isDownloading ? (
+                                    <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+                                  ) : downloadedImageId === item.id ? (
+                                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-400 animate-in zoom-in duration-300" />
+                                  ) : (
+                                    <Download className="w-3 h-3 sm:w-4 sm:h-4" />
+                                  )}
+                                </button>
+                              </div>
+                            );
+                          })()}
+                        </div>
                       );
                     })}
                   </div>
@@ -310,9 +520,7 @@ export default function ContentView() {
                     </div>
                   </div>
                 </div>
-
-                {/* Hover Effect Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-[#124C45]/5 to-[#023D4F]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                )}
               </div>
             ))}
           </div>
@@ -389,6 +597,76 @@ export default function ContentView() {
           </div>
         </div>
       )}
+
+      {/* Image Preview Modal */}
+      {previewImage && (() => {
+        // Extraer el ID del archivo de la URL para el modal
+        const urlParts = previewImage.url.split('/');
+        const fileNameWithExtension = urlParts[urlParts.length - 1];
+        const fileId = fileNameWithExtension.split('_')[0];
+        
+        // Obtener todas las imágenes de la sección actual
+        const currentSection = sectionsWithContent.find(section => 
+          section.items.some(item => item.id === previewImage.id)
+        );
+        
+        const imagesInSection = currentSection?.items.filter(item => item.type === 'image') || [];
+        const currentImageIndex = imagesInSection.findIndex(item => item.id === previewImage.id);
+        const hasNext = currentImageIndex < imagesInSection.length - 1;
+        const hasPrevious = currentImageIndex > 0;
+        
+        const handleNext = () => {
+          if (hasNext) {
+            setPreviewImage(imagesInSection[currentImageIndex + 1]);
+          }
+        };
+        
+        const handlePrevious = () => {
+          if (hasPrevious) {
+            setPreviewImage(imagesInSection[currentImageIndex - 1]);
+          }
+        };
+        
+        return (
+          <ImagePreviewModal
+            imageId={fileId}
+            imageTitle={previewImage.title}
+            onClose={() => setPreviewImage(null)}
+            onDownload={async () => {
+              // Extraer el ID y descargar con nombre correcto
+              const downloadUrl = `/api/proxy?path=Hostinger/getImage/${fileId}`;
+              try {
+                const token = localStorage.getItem('authToken');
+                const response = await fetch(downloadUrl, {
+                  headers: {
+                    'Authorization': token ? `Bearer ${token}` : ''
+                  }
+                });
+                
+                if (response.ok) {
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = `${previewImage.title}.png`;
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                  window.URL.revokeObjectURL(url);
+                }
+              } catch (error) {
+                console.error('Error al descargar:', error);
+              }
+            }}
+            onNext={hasNext ? handleNext : undefined}
+            onPrevious={hasPrevious ? handlePrevious : undefined}
+            hasNext={hasNext}
+            hasPrevious={hasPrevious}
+            currentIndex={currentImageIndex}
+            totalImages={imagesInSection.length}
+          />
+        );
+      })()}
     </div>
   );
 }
