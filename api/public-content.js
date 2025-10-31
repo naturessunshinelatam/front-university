@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     }
 
     // Construir URL del backend para contenido público (SIN PROXY, directo)
-    const backendUrl = `https://stage-sunshine-university-75022824581.us-central1.run.app/api/SiteContent/countryAll/${countryCode}`;
+    const backendUrl = `https://universidad-sunshine-266897521700.us-central1.run.app/api/SiteContent/countryAll/${countryCode}`;
 
     console.log('🔄 Fetching public content:', backendUrl);
 
