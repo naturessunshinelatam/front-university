@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
   try {
     // Hacer la llamada a la API externa
-    const response = await fetch('https://stage-sunshine-university-75022824581.us-central1.run.app/api/Auth/login', {
+    const response = await fetch('https://universidad-sunshine-266897521700.us-central1.run.app/api/Auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

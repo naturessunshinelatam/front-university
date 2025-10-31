@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     console.log('📋 Content-Type:', req.headers['content-type']);
 
     // Construir URL del backend
-    const backendUrl = `https://stage-sunshine-university-75022824581.us-central1.run.app/api/Hostinger/upload/image`;
+    const backendUrl = `https://universidad-sunshine-266897521700.us-central1.run.app/api/Hostinger/upload/image`;
 
     console.log('🔄 Proxy upload a:', backendUrl);
 
