@@ -49,7 +49,7 @@ export default async function handler(req, res) {
     });
     
     // Hacer la llamada a la API externa
-    const response = await fetch('https://stage-sunshine-university-75022824581.us-central1.run.app/api/User/update', {
+    const response = await fetch('https://universidad-sunshine-266897521700.us-central1.run.app/api/User/update', {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const { path, ...queryParams } = req.query;
     const targetPath = Array.isArray(path) ? path.join('/') : path;
     // Asegúrate de que esta URL sea la correcta en el nuevo proyecto (revisar si cambió)
-    const backendUrl = `https://stage-sunshine-university-75022824581.us-central1.run.app/api/${targetPath}`;
+    const backendUrl = `https://universidad-sunshine-266897521700.us-central1.run.app/api/${targetPath}`;
     const queryString = new URLSearchParams(queryParams).toString();
     const fullUrl = queryString ? `${backendUrl}?${queryString}` : backendUrl;
 
