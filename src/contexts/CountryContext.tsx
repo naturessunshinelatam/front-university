@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { GEO_IP_API } from "../config";
 
 interface Country {
   code: string;
@@ -29,14 +30,14 @@ const CountryContext = createContext<CountryContextType | undefined>(undefined);
 
 // Países soportados (8 países)
 const COUNTRIES: Country[] = [
-  { code: 'MX', name: 'México', flag: '🇲🇽' },
-  { code: 'CO', name: 'Colombia', flag: '🇨🇴' },
-  { code: 'EC', name: 'Ecuador', flag: '🇪🇨' },
-  { code: 'SV', name: 'El Salvador', flag: '🇸🇻' },
-  { code: 'GT', name: 'Guatemala', flag: '🇬🇹' },
-  { code: 'HN', name: 'Honduras', flag: '🇭🇳' },
-  { code: 'DO', name: 'República Dominicana', flag: '🇩🇴' },
-  { code: 'PA', name: 'Panamá', flag: '🇵🇦' }
+  { code: "MX", name: "México", flag: "🇲🇽" },
+  { code: "CO", name: "Colombia", flag: "🇨🇴" },
+  { code: "EC", name: "Ecuador", flag: "🇪🇨" },
+  { code: "SV", name: "El Salvador", flag: "🇸🇻" },
+  { code: "GT", name: "Guatemala", flag: "🇬🇹" },
+  { code: "HN", name: "Honduras", flag: "🇭🇳" },
+  { code: "DO", name: "República Dominicana", flag: "🇩🇴" },
+  { code: "PA", name: "Panamá", flag: "🇵🇦" },
 ];
 
 // Países que requieren aceptación de políticas de privacidad
@@ -45,37 +46,37 @@ const COUNTRIES: Country[] = [
 const PRIVACY_REQUIRED_COUNTRIES: string[] = []; // Array vacío = ningún país requiere políticas
 
 // País fallback cuando se rechazan políticas
-const FALLBACK_COUNTRY = COUNTRIES.find(c => c.code === 'PA') || COUNTRIES[0];
+const FALLBACK_COUNTRY = COUNTRIES.find((c) => c.code === "PA") || COUNTRIES[0];
 
 /**
  * Detecta el país del usuario usando ipapi.co
  */
 const detectCountry = async (): Promise<Country> => {
   try {
-    console.log('🌍 Detectando país del usuario...');
-    const response = await fetch('https://ipapi.co/json/');
+    console.log("🌍 Detectando país del usuario...");
+    const response = await fetch(GEO_IP_API);
     const data = await response.json();
-    
+
     const countryCode = data.country;
-    console.log('📍 País detectado:', countryCode);
-    
+    console.log("📍 País detectado:", countryCode);
+
     // Buscar el país en nuestra lista de países soportados
-    const detectedCountry = COUNTRIES.find(c => c.code === countryCode);
-    
+    const detectedCountry = COUNTRIES.find((c) => c.code === countryCode);
+
     if (detectedCountry) {
-      console.log('✅ País soportado:', detectedCountry.name);
+      console.log("✅ País soportado:", detectedCountry.name);
       return detectedCountry;
     } else {
-      console.log('⚠️ País no soportado:', countryCode);
+      console.log("⚠️ País no soportado:", countryCode);
       // Retornar un objeto especial para países no soportados
       return {
         code: countryCode,
-        name: data.country_name || 'País no soportado',
-        flag: '🌎'
+        name: data.country_name || "País no soportado",
+        flag: "🌎",
       };
     }
   } catch (error) {
-    console.error('❌ Error al detectar país:', error);
+    console.error("❌ Error al detectar país:", error);
     // En caso de error, retornar México como default
     return COUNTRIES[0];
   }
@@ -85,20 +86,25 @@ const detectCountry = async (): Promise<Country> => {
  * Verifica si un país está en la lista de países soportados
  */
 const isCountrySupportedFn = (countryCode: string): boolean => {
-  return COUNTRIES.some(c => c.code === countryCode);
+  return COUNTRIES.some((c) => c.code === countryCode);
 };
 
 export function CountryProvider({ children }: { children: React.ReactNode }) {
-  const [selectedCountry, setSelectedCountryState] = useState<Country>(COUNTRIES[0]);
+  const [selectedCountry, setSelectedCountryState] = useState<Country>(
+    COUNTRIES[0]
+  );
   const [detectedCountry, setDetectedCountry] = useState<Country>(COUNTRIES[0]);
   const [showCountryAlert, setShowCountryAlert] = useState(false);
-  
+
   // Estados para políticas de privacidad
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
-  const [acceptedPrivacyPolicies, setAcceptedPrivacyPolicies] = useState<{ [key: string]: boolean }>({});
-  
+  const [acceptedPrivacyPolicies, setAcceptedPrivacyPolicies] = useState<{
+    [key: string]: boolean;
+  }>({});
+
   // Estados para países no soportados
-  const [showUnsupportedCountryModal, setShowUnsupportedCountryModal] = useState(false);
+  const [showUnsupportedCountryModal, setShowUnsupportedCountryModal] =
+    useState(false);
   const [isCountrySupported, setIsCountrySupported] = useState(true);
 
   /**
@@ -107,16 +113,16 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initializeCountry = async () => {
       // Cargar políticas aceptadas desde localStorage PRIMERO
-      const storedPolicies = localStorage.getItem('acceptedPrivacyPolicies');
+      const storedPolicies = localStorage.getItem("acceptedPrivacyPolicies");
       let loadedPolicies: { [key: string]: boolean } = {};
-      
+
       if (storedPolicies) {
         try {
           loadedPolicies = JSON.parse(storedPolicies);
           setAcceptedPrivacyPolicies(loadedPolicies);
-          console.log('📋 Políticas cargadas:', loadedPolicies);
+          console.log("📋 Políticas cargadas:", loadedPolicies);
         } catch (error) {
-          console.error('Error parsing privacy policies:', error);
+          console.error("Error parsing privacy policies:", error);
         }
       }
 
@@ -129,11 +135,11 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
       setIsCountrySupported(supported);
 
       // Cargar país seleccionado previamente
-      const stored = localStorage.getItem('selectedCountry');
-      
+      const stored = localStorage.getItem("selectedCountry");
+
       if (!supported) {
         // País no soportado - Mostrar modal de selección
-        console.log('⚠️ País no soportado, mostrando modal de selección');
+        console.log("⚠️ País no soportado, mostrando modal de selección");
         setShowUnsupportedCountryModal(true);
         // Usar país almacenado si existe, sino usar México como default
         if (stored) {
@@ -152,16 +158,19 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
           try {
             const parsedCountry = JSON.parse(stored);
             setSelectedCountryState(parsedCountry);
-            
+
             // Verificar si necesita aceptar políticas usando loadedPolicies
             if (PRIVACY_REQUIRED_COUNTRIES.includes(parsedCountry.code)) {
               const hasAccepted = loadedPolicies[parsedCountry.code];
               if (!hasAccepted) {
-                console.log('📋 Mostrando modal de políticas para:', parsedCountry.code);
+                console.log(
+                  "📋 Mostrando modal de políticas para:",
+                  parsedCountry.code
+                );
                 setShowPrivacyModal(true);
               }
             }
-            
+
             // Mostrar alerta si el país detectado es diferente
             if (parsedCountry.code !== detected.code) {
               setShowCountryAlert(true);
@@ -172,7 +181,10 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
             if (PRIVACY_REQUIRED_COUNTRIES.includes(detected.code)) {
               const hasAccepted = loadedPolicies[detected.code];
               if (!hasAccepted) {
-                console.log('📋 Mostrando modal de políticas para:', detected.code);
+                console.log(
+                  "📋 Mostrando modal de políticas para:",
+                  detected.code
+                );
                 setShowPrivacyModal(true);
               }
             }
@@ -180,12 +192,15 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
         } else {
           // Primera vez - usar país detectado
           setSelectedCountryState(detected);
-          localStorage.setItem('selectedCountry', JSON.stringify(detected));
+          localStorage.setItem("selectedCountry", JSON.stringify(detected));
           // Verificar políticas usando loadedPolicies
           if (PRIVACY_REQUIRED_COUNTRIES.includes(detected.code)) {
             const hasAccepted = loadedPolicies[detected.code];
             if (!hasAccepted) {
-              console.log('📋 Mostrando modal de políticas para:', detected.code);
+              console.log(
+                "📋 Mostrando modal de políticas para:",
+                detected.code
+              );
               setShowPrivacyModal(true);
             }
           }
@@ -202,20 +217,20 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   const checkPrivacyPolicy = (countryCode: string) => {
     if (PRIVACY_REQUIRED_COUNTRIES.includes(countryCode)) {
       // Leer directamente de localStorage para tener el valor más actualizado
-      const storedPolicies = localStorage.getItem('acceptedPrivacyPolicies');
+      const storedPolicies = localStorage.getItem("acceptedPrivacyPolicies");
       let loadedPolicies: { [key: string]: boolean } = {};
-      
+
       if (storedPolicies) {
         try {
           loadedPolicies = JSON.parse(storedPolicies);
         } catch (error) {
-          console.error('Error parsing privacy policies:', error);
+          console.error("Error parsing privacy policies:", error);
         }
       }
-      
+
       const hasAccepted = loadedPolicies[countryCode];
       if (!hasAccepted) {
-        console.log('📋 Mostrando modal de políticas para:', countryCode);
+        console.log("📋 Mostrando modal de políticas para:", countryCode);
         setShowPrivacyModal(true);
       }
     }
@@ -226,9 +241,9 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
    */
   const setSelectedCountry = (country: Country) => {
     setSelectedCountryState(country);
-    localStorage.setItem('selectedCountry', JSON.stringify(country));
+    localStorage.setItem("selectedCountry", JSON.stringify(country));
     setShowCountryAlert(false);
-    
+
     // Verificar si el nuevo país requiere políticas
     checkPrivacyPolicy(country.code);
   };
@@ -238,9 +253,9 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
    */
   const selectCountryFromModal = (country: Country) => {
     setSelectedCountryState(country);
-    localStorage.setItem('selectedCountry', JSON.stringify(country));
+    localStorage.setItem("selectedCountry", JSON.stringify(country));
     setShowUnsupportedCountryModal(false);
-    
+
     // Verificar si el país seleccionado requiere políticas
     checkPrivacyPolicy(country.code);
   };
@@ -251,25 +266,28 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   const acceptPrivacyPolicy = () => {
     const updatedPolicies = {
       ...acceptedPrivacyPolicies,
-      [selectedCountry.code]: true
+      [selectedCountry.code]: true,
     };
     setAcceptedPrivacyPolicies(updatedPolicies);
-    localStorage.setItem('acceptedPrivacyPolicies', JSON.stringify(updatedPolicies));
+    localStorage.setItem(
+      "acceptedPrivacyPolicies",
+      JSON.stringify(updatedPolicies)
+    );
     setShowPrivacyModal(false);
-    console.log('✅ Políticas aceptadas para:', selectedCountry.code);
+    console.log("✅ Políticas aceptadas para:", selectedCountry.code);
   };
 
   /**
    * Rechaza las políticas de privacidad y redirige a país fallback
    */
   const rejectPrivacyPolicy = () => {
-    console.log('❌ Políticas rechazadas para:', selectedCountry.code);
+    console.log("❌ Políticas rechazadas para:", selectedCountry.code);
     setShowPrivacyModal(false);
-    
+
     // Redirigir a país fallback (Panamá)
     setSelectedCountryState(FALLBACK_COUNTRY);
-    localStorage.setItem('selectedCountry', JSON.stringify(FALLBACK_COUNTRY));
-    
+    localStorage.setItem("selectedCountry", JSON.stringify(FALLBACK_COUNTRY));
+
     // Mostrar notificación (se manejará en el componente del modal)
   };
 
@@ -292,22 +310,24 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <CountryContext.Provider value={{
-      selectedCountry,
-      detectedCountry,
-      availableCountries: COUNTRIES,
-      setSelectedCountry,
-      showCountryAlert,
-      dismissCountryAlert,
-      showPrivacyModal,
-      acceptPrivacyPolicy,
-      rejectPrivacyPolicy,
-      hasAcceptedPrivacyPolicy,
-      requiresPrivacyPolicy,
-      showUnsupportedCountryModal,
-      isCountrySupported,
-      selectCountryFromModal
-    }}>
+    <CountryContext.Provider
+      value={{
+        selectedCountry,
+        detectedCountry,
+        availableCountries: COUNTRIES,
+        setSelectedCountry,
+        showCountryAlert,
+        dismissCountryAlert,
+        showPrivacyModal,
+        acceptPrivacyPolicy,
+        rejectPrivacyPolicy,
+        hasAcceptedPrivacyPolicy,
+        requiresPrivacyPolicy,
+        showUnsupportedCountryModal,
+        isCountrySupported,
+        selectCountryFromModal,
+      }}
+    >
       {children}
     </CountryContext.Provider>
   );
@@ -316,7 +336,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
 export function useCountry() {
   const context = useContext(CountryContext);
   if (context === undefined) {
-    throw new Error('useCountry must be used within a CountryProvider');
+    throw new Error("useCountry must be used within a CountryProvider");
   }
   return context;
 }

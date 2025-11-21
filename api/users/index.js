@@ -6,9 +6,11 @@ export default async function handler(req, res) {
 
   try {
     const authToken = req.headers.authorization;
-    
+
     // Hacer la llamada a la API externa
-    const response = await fetch('https://universidad-sunshine-266897521700.us-central1.run.app/api/User', {
+    const backendBaseRaw = process.env.BACKEND_API_BASE_URL || 'https://universidad-sunshine-266897521700.us-central1.run.app';
+    const backendBase = backendBaseRaw.replace(/\/$/, '');
+    const response = await fetch(`${backendBase}/api/User`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

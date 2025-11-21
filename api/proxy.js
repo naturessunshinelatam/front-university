@@ -22,8 +22,10 @@ export default async function handler(req, res) {
   try {
     const { path, ...queryParams } = req.query;
     const targetPath = Array.isArray(path) ? path.join('/') : path;
-    // Asegúrate de que esta URL sea la correcta en el nuevo proyecto (revisar si cambió)
-    const backendUrl = `https://universidad-sunshine-266897521700.us-central1.run.app/api/${targetPath}`;
+    // Determinar URL base del backend desde variable de entorno (configurable por entorno)
+    const backendBaseRaw = process.env.BACKEND_API_BASE_URL || 'https://universidad-sunshine-266897521700.us-central1.run.app';
+    const backendBase = backendBaseRaw.replace(/\/$/, '');
+    const backendUrl = `${backendBase}/api/${targetPath}`;
     const queryString = new URLSearchParams(queryParams).toString();
     const fullUrl = queryString ? `${backendUrl}?${queryString}` : backendUrl;
 
