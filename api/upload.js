@@ -27,7 +27,7 @@ export default async function handler(req, res) {
   try {
     // Obtener el token de autorización
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
       res.status(401).json({ error: 'Authorization header required' });
       return;
@@ -36,8 +36,10 @@ export default async function handler(req, res) {
     console.log('📤 Upload request recibido en Vercel');
     console.log('📋 Content-Type:', req.headers['content-type']);
 
-    // Construir URL del backend
-    const backendUrl = `https://universidad-sunshine-266897521700.us-central1.run.app/api/Hostinger/upload/image`;
+    // Construir URL del backend desde variable de entorno (configurable)
+    const backendBaseRaw = process.env.BACKEND_API_BASE_URL || 'https://universidad-sunshine-266897521700.us-central1.run.app';
+    const backendBase = backendBaseRaw.replace(/\/$/, '');
+    const backendUrl = `${backendBase}/api/Hostinger/upload/image`;
 
     console.log('🔄 Proxy upload a:', backendUrl);
 
@@ -56,17 +58,17 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Backend error:', response.status, errorText);
-      res.status(response.status).json({ 
-        error: 'Backend error', 
+      res.status(response.status).json({
+        error: 'Backend error',
         status: response.status,
-        message: errorText 
+        message: errorText
       });
       return;
     }
 
     const data = await response.json();
     console.log('✅ Upload exitoso:', data);
-    
+
     res.status(response.status).json(data);
   } catch (error) {
     console.error('❌ Proxy error (upload):', error);
