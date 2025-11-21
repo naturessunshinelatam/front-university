@@ -515,3 +515,5 @@ Si quieres, puedo:
 
 - automatizar la sustitución de más URLs hardcodeadas para usar `src/config` (aplicar patches seguros), o
 - listar archivos en `api/` que no estén referenciados por `src/` para que tú decidas si eliminarlos.
+
+- Prueba por pull request
