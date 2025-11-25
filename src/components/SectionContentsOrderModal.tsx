@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAlert } from "./AlertSystem";
 import DraggableList from "./DraggableList";
+import { API_BASE_URL } from "../config";
 
 interface ContentItem {
   id: string;
@@ -37,13 +38,16 @@ export default function SectionContentsOrderModal({
       setLoading(true);
       try {
         const token = localStorage.getItem("authToken");
-        const res = await fetch(`/api/Content/${categoryId}/${sectionId}`, {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
+        const res = await fetch(
+          `${API_BASE_URL}/api/Content/${categoryId}/${sectionId}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          }
+        );
 
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
@@ -86,7 +90,7 @@ export default function SectionContentsOrderModal({
         mapping[it.id] = idx;
       });
 
-      const res = await fetch("/api/Content/update-order", {
+      const res = await fetch(`${API_BASE_URL}/api/Content/update-order`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
