@@ -13,9 +13,9 @@ export default async function handler(req, res) {
 
   try {
     const authToken = req.headers.authorization;
-    
+
     console.log('📥 Datos recibidos para crear usuario:', { ...req.body, password: req.body.password ? '[PROVIDED]' : '[NOT_PROVIDED]' });
-    
+
     // COMENTADO: Ya no validamos ContentManager, solo Admin
     // Validar que solo se usen roles permitidos
     // const allowedRoles = ['Admin', 'ContentManager'];
@@ -24,16 +24,18 @@ export default async function handler(req, res) {
       const invalidRoles = req.body.roles.filter(role => !allowedRoles.includes(role));
       if (invalidRoles.length > 0) {
         console.log('❌ Invalid roles:', invalidRoles);
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: 'Invalid roles provided',
           invalidRoles,
           allowedRoles
         });
       }
     }
-    
+
     // Hacer la llamada a la API externa
-    const response = await fetch('https://universidad-sunshine-266897521700.us-central1.run.app/api/User/create', {
+    const backendBaseRaw = process.env.BACKEND_API_BASE_URL || 'https://universidad-sunshine-266897521700.us-central1.run.app';
+    const backendBase = backendBaseRaw.replace(/\/$/, '');
+    const response = await fetch(`${backendBase}/api/User/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -44,7 +46,7 @@ export default async function handler(req, res) {
     });
 
     const data = await response.json();
-    
+
     console.log('📨 Respuesta de API externa (crear):', response.status, data);
 
     // Devolver la respuesta con los headers CORS correctos

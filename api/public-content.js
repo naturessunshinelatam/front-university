@@ -22,14 +22,16 @@ export default async function handler(req, res) {
 
   try {
     const { countryCode } = req.query;
-    
+
     if (!countryCode) {
       res.status(400).json({ error: 'Country code is required' });
       return;
     }
 
     // Construir URL del backend para contenido público (SIN PROXY, directo)
-    const backendUrl = `https://universidad-sunshine-266897521700.us-central1.run.app/api/SiteContent/countryAll/${countryCode}`;
+    const backendBaseRaw = process.env.BACKEND_API_BASE_URL || 'https://universidad-sunshine-266897521700.us-central1.run.app';
+    const backendBase = backendBaseRaw.replace(/\/$/, '');
+    const backendUrl = `${backendBase}/api/SiteContent/countryAll/${countryCode}`;
 
     console.log('🔄 Fetching public content:', backendUrl);
 
@@ -45,16 +47,16 @@ export default async function handler(req, res) {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('❌ Backend error:', response.status, errorText);
-      res.status(response.status).json({ 
-        error: 'Backend error', 
+      res.status(response.status).json({
+        error: 'Backend error',
         status: response.status,
-        message: errorText 
+        message: errorText
       });
       return;
     }
 
     const data = await response.json();
-    
+
     res.status(200).json(data);
   } catch (error) {
     console.error('❌ Proxy error (public content):', error);

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 // Interfaz para el contenido completo de la API
 export interface ContentItem {
@@ -35,10 +35,12 @@ export interface ContentItem {
     createdBy: string;
     updatedBy: string | null;
   };
+  subsection: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
+  OrderIndex: number;
 }
 
 // Interfaz para categoría extraída
@@ -98,7 +100,9 @@ interface UsePublicContentAllReturn {
  * @param countryCode - Código del país (ej: 'CO', 'MX')
  * @returns Contenido completo, categorías, secciones y funciones helper
  */
-export function usePublicContentAll(countryCode: string): UsePublicContentAllReturn {
+export function usePublicContentAll(
+  countryCode: string
+): UsePublicContentAllReturn {
   const [content, setContent] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [sections, setSections] = useState<Section[]>([]);
@@ -131,13 +135,13 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
    */
   const extractCategories = useCallback((items: ContentItem[]): Category[] => {
     const categoryMap = new Map<string, Category>();
-    
-    items.forEach(item => {
+
+    items.forEach((item) => {
       if (!categoryMap.has(item.category.id)) {
         categoryMap.set(item.category.id, item.category);
       }
     });
-    
+
     return Array.from(categoryMap.values());
   }, []);
 
@@ -146,13 +150,13 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
    */
   const extractSections = useCallback((items: ContentItem[]): Section[] => {
     const sectionMap = new Map<string, Section>();
-    
-    items.forEach(item => {
+
+    items.forEach((item) => {
       if (!sectionMap.has(item.section.id)) {
         sectionMap.set(item.section.id, item.section);
       }
     });
-    
+
     return Array.from(sectionMap.values());
   }, []);
 
@@ -169,19 +173,21 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
     setError(null);
 
     try {
-      console.log(`🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`);
-      
+      console.log(
+        `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`
+      );
+
       // SIEMPRE usar el endpoint de Vercel (funciona tanto en local como en producción)
       // Vercel servirá /api/public-content.js automáticamente como serverless function
       const endpoint = `/api/public-content?countryCode=${countryCode}`;
-      
+
       console.log(`📡 Endpoint: ${endpoint}`);
-      
+
       const response = await fetch(endpoint, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
       });
 
@@ -192,17 +198,21 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
       const data: ApiResponse = await response.json();
 
       if (!data.success) {
-        throw new Error(data.message || 'Error al obtener contenido');
+        throw new Error(data.message || "Error al obtener contenido");
       }
 
       // Filtrar solo contenido publicado y activo
-      const activeContent = (data.data || []).filter(item => {
-        const isPublished = item.status === 'Published';
+      const activeContent = (data.data || []).filter((item) => {
+        const isPublished = item.status === "Published";
         const isActive = isContentActive(item);
         return isPublished && isActive;
       });
 
-      console.log(`✅ Contenido COMPLETO cargado en TIEMPO REAL para ${countryCode}:`, activeContent.length, 'items');
+      console.log(
+        `✅ Contenido COMPLETO cargado en TIEMPO REAL para ${countryCode}:`,
+        activeContent.length,
+        "items"
+      );
 
       // Extraer categorías y secciones únicas
       const extractedCategories = extractCategories(activeContent);
@@ -216,11 +226,15 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
       setSections(extractedSections);
       setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-      console.error(`❌ Error al cargar contenido para ${countryCode}:`, errorMessage);
-      
+      const errorMessage =
+        err instanceof Error ? err.message : "Error desconocido";
+      console.error(
+        `❌ Error al cargar contenido para ${countryCode}:`,
+        errorMessage
+      );
+
       // Si es un 404, significa que no hay contenido para este país (no es un error crítico)
-      if (errorMessage.includes('404')) {
+      if (errorMessage.includes("404")) {
         console.log(`ℹ️ No hay contenido disponible para ${countryCode}`);
         setError(null); // No mostrar como error
         setContent([]);
@@ -254,72 +268,94 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
   /**
    * Obtiene una categoría por ID
    */
-  const getCategoryById = useCallback((categoryId: string): Category | undefined => {
-    return categories.find(cat => cat.id === categoryId);
-  }, [categories]);
+  const getCategoryById = useCallback(
+    (categoryId: string): Category | undefined => {
+      return categories.find((cat) => cat.id === categoryId);
+    },
+    [categories]
+  );
 
   /**
    * Obtiene una sección por ID
    */
-  const getSectionById = useCallback((sectionId: string): Section | undefined => {
-    return sections.find(sec => sec.id === sectionId);
-  }, [sections]);
+  const getSectionById = useCallback(
+    (sectionId: string): Section | undefined => {
+      return sections.find((sec) => sec.id === sectionId);
+    },
+    [sections]
+  );
 
   /**
    * Obtiene contenido filtrado por categoría
    * NOTA: Esta función NO filtra por secciones públicas del país
    */
-  const getContentByCategory = useCallback((categoryId: string): ContentItem[] => {
-    return content.filter(item => item.category.id === categoryId);
-  }, [content]);
+  const getContentByCategory = useCallback(
+    (categoryId: string): ContentItem[] => {
+      return content.filter((item) => item.category.id === categoryId);
+    },
+    [content]
+  );
 
   /**
    * Obtiene contenido filtrado por categoría Y por secciones públicas del país actual
    * Solo retorna contenido de secciones que están disponibles para el país
    */
-  const getContentByCategoryFiltered = useCallback((categoryId: string): ContentItem[] => {
-    // Primero obtener las secciones públicas de esta categoría para el país actual
-    const publicSections = sections.filter(section => 
-      section.categoryId === categoryId && 
-      section.countries.includes(countryCode)
-    );
-    
-    // Crear un Set con los IDs de secciones públicas para búsqueda rápida
-    const publicSectionIds = new Set(publicSections.map(s => s.id));
-    
-    // Filtrar contenido que pertenece a secciones públicas
-    return content.filter(item => 
-      item.category.id === categoryId && 
-      publicSectionIds.has(item.section.id)
-    );
-  }, [content, sections, countryCode]);
+  const getContentByCategoryFiltered = useCallback(
+    (categoryId: string): ContentItem[] => {
+      // Primero obtener las secciones públicas de esta categoría para el país actual
+      const publicSections = sections.filter(
+        (section) =>
+          section.categoryId === categoryId &&
+          section.countries.includes(countryCode)
+      );
+
+      // Crear un Set con los IDs de secciones públicas para búsqueda rápida
+      const publicSectionIds = new Set(publicSections.map((s) => s.id));
+
+      // Filtrar contenido que pertenece a secciones públicas
+      return content.filter(
+        (item) =>
+          item.category.id === categoryId &&
+          publicSectionIds.has(item.section.id)
+      );
+    },
+    [content, sections, countryCode]
+  );
 
   /**
    * Obtiene contenido filtrado por categoría y sección
    */
-  const getContentBySection = useCallback((categoryId: string, sectionId: string): ContentItem[] => {
-    return content.filter(item => 
-      item.category.id === categoryId && item.section.id === sectionId
-    );
-  }, [content]);
+  const getContentBySection = useCallback(
+    (categoryId: string, sectionId: string): ContentItem[] => {
+      return content.filter(
+        (item) =>
+          item.category.id === categoryId && item.section.id === sectionId
+      );
+    },
+    [content]
+  );
 
   /**
    * Obtiene secciones de una categoría específica
    * FILTRADAS por país actual - Solo muestra secciones disponibles para este país
    */
-  const getSectionsByCategory = useCallback((categoryId: string): Section[] => {
-    return sections.filter(section => 
-      section.categoryId === categoryId && 
-      section.countries.includes(countryCode)
-    );
-  }, [sections, countryCode]);
+  const getSectionsByCategory = useCallback(
+    (categoryId: string): Section[] => {
+      return sections.filter(
+        (section) =>
+          section.categoryId === categoryId &&
+          section.countries.includes(countryCode)
+      );
+    },
+    [sections, countryCode]
+  );
 
   /**
    * Obtiene solo las categorías que tienen contenido
    * NOTA: Esta función NO filtra por secciones públicas del país
    */
   const getCategoriesWithContent = useCallback((): Category[] => {
-    return categories.filter(category => {
+    return categories.filter((category) => {
       const categoryContent = getContentByCategory(category.id);
       return categoryContent.length > 0;
     });
@@ -330,7 +366,7 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
    * Solo retorna categorías con contenido realmente accesible
    */
   const getCategoriesWithContentFiltered = useCallback((): Category[] => {
-    return categories.filter(category => {
+    return categories.filter((category) => {
       const categoryContent = getContentByCategoryFiltered(category.id);
       return categoryContent.length > 0;
     });
@@ -350,6 +386,6 @@ export function usePublicContentAll(countryCode: string): UsePublicContentAllRet
     getContentBySection,
     getSectionsByCategory,
     getCategoriesWithContent,
-    getCategoriesWithContentFiltered
+    getCategoriesWithContentFiltered,
   };
 }
