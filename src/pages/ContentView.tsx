@@ -114,6 +114,7 @@ export default function ContentView() {
     "🔍 ContentView - Secciones de esta categoría:",
     availableSections.length
   );
+  console.log(`Get SectionsbyCategory: ${{ availableSections }}`);
 
   /**
    * Construye los datos de contenido organizados por sección
@@ -128,7 +129,6 @@ export default function ContentView() {
       console.log(
         `📋 ContentView - Sección "${section.sectionName}" tiene ${sectionContent.length} contenidos`
       );
-      console.log(sectionContent);
 
       return {
         id: section.id,
