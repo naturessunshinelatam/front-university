@@ -40,7 +40,7 @@ export interface ContentItem {
   createdAt: string;
   updatedAt: string;
   updatedBy: string;
-  OrderIndex: number;
+  orderIndex: number;
 }
 
 // Interfaz para categoría extraída
@@ -327,10 +327,13 @@ export function usePublicContentAll(
    */
   const getContentBySection = useCallback(
     (categoryId: string, sectionId: string): ContentItem[] => {
-      return content.filter(
-        (item) =>
-          item.category.id === categoryId && item.section.id === sectionId
-      );
+      return content
+        .filter(
+          (item) =>
+            item.category.id === categoryId && item.section.id === sectionId
+        )
+        .slice()
+        .sort((a, b) => a.orderIndex - b.orderIndex); // Ordenar por OrderIndex
     },
     [content]
   );
