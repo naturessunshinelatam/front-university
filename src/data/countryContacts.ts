@@ -24,7 +24,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/50242156311",
     facebookLink: "https://www.facebook.com/groups/naturessunshineguatemala/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   SV: {
@@ -36,7 +36,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/50377480139",
     facebookLink: "https://www.facebook.com/groups/naturessunshineelsalvador/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   MX: {
@@ -48,7 +48,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/5520953620",
     facebookLink: "https://www.facebook.com/groups/naturessunshinemexico/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   CO: {
@@ -60,7 +60,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/573223403844",
     facebookLink: "https://www.facebook.com/groups/naturessunshinecolombia/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   PA: {
@@ -72,7 +72,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/50766723314",
     facebookLink: "https://www.facebook.com/groups/naturessunshinepanama/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   HN: {
@@ -84,7 +84,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/50431883952",
     facebookLink: " https://www.facebook.com/groups/naturessunshinehonduras/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   EC: {
@@ -96,7 +96,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     whatsappLink: "https://wa.me/593997334700",
     facebookLink: "https://www.facebook.com/groups/naturessunshineecuador/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
   DO: {
@@ -109,7 +109,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     facebookLink:
       "https://www.facebook.com/groups/naturessunshinerepublicadominicana/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
-    instagramLink: "https://www.instagram.com/naturessunshine/?hl=en",
+    instagramLink: "https://www.instagram.com/naturessunshinelatam/",
     youtubeLink: "https://www.youtube.com/@NaturesSunshineLATAM",
   },
 };
