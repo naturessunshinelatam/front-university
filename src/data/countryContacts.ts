@@ -33,7 +33,7 @@ export const contactData: Record<CountryCode, CountryContactInfo> = {
     address: "...",
     whatsapp: "+503 7644 5926",
     website: "https://sv.naturessunshinelatam.com/ecommerce",
-    whatsappLink: "https://wa.me/50377480139",
+    whatsappLink: "https://wa.me/50376445926",
     facebookLink: "https://www.facebook.com/groups/naturessunshineelsalvador/",
     tiktokLink: "https://www.tiktok.com/@naturessunshineproducts",
     instagramLink: "https://www.instagram.com/naturessunshinelatam/",
