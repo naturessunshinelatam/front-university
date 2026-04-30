@@ -64,7 +64,7 @@ const detectCountry = async (): Promise<Country> => {
     const detectedCountry = COUNTRIES.find((c) => c.code === countryCode);
 
     if (detectedCountry) {
-      console.log("✅ País soportado:", detectedCountry.name);
+      // console.log("✅ País soportado:", detectedCountry.name);
       return detectedCountry;
     } else {
       console.log("⚠️ País no soportado:", countryCode);
@@ -91,7 +91,7 @@ const isCountrySupportedFn = (countryCode: string): boolean => {
 
 export function CountryProvider({ children }: { children: React.ReactNode }) {
   const [selectedCountry, setSelectedCountryState] = useState<Country>(
-    COUNTRIES[0]
+    COUNTRIES[0],
   );
   const [detectedCountry, setDetectedCountry] = useState<Country>(COUNTRIES[0]);
   const [showCountryAlert, setShowCountryAlert] = useState(false);
@@ -165,7 +165,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
               if (!hasAccepted) {
                 console.log(
                   "📋 Mostrando modal de políticas para:",
-                  parsedCountry.code
+                  parsedCountry.code,
                 );
                 setShowPrivacyModal(true);
               }
@@ -183,7 +183,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
               if (!hasAccepted) {
                 console.log(
                   "📋 Mostrando modal de políticas para:",
-                  detected.code
+                  detected.code,
                 );
                 setShowPrivacyModal(true);
               }
@@ -199,7 +199,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
             if (!hasAccepted) {
               console.log(
                 "📋 Mostrando modal de políticas para:",
-                detected.code
+                detected.code,
               );
               setShowPrivacyModal(true);
             }
@@ -271,7 +271,7 @@ export function CountryProvider({ children }: { children: React.ReactNode }) {
     setAcceptedPrivacyPolicies(updatedPolicies);
     localStorage.setItem(
       "acceptedPrivacyPolicies",
-      JSON.stringify(updatedPolicies)
+      JSON.stringify(updatedPolicies),
     );
     setShowPrivacyModal(false);
     console.log("✅ Políticas aceptadas para:", selectedCountry.code);

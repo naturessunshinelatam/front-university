@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "../config";
 
 interface Content {
@@ -55,6 +55,7 @@ export function useContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const contentCache = useRef<Record<string, Content[]>>({});
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("authToken");
@@ -68,17 +69,17 @@ export function useContent() {
   // Función para subir archivos a Hostinger
   const uploadFile = async (
     file: File,
-    fileType: "image" | "file" | "video"
+    fileType: "image" | "file" | "video",
   ): Promise<string | null> => {
     setUploadProgress(0);
 
     try {
-      console.log(
-        "📤 Subiendo archivo a Hostinger:",
-        file.name,
-        "Tipo:",
-        fileType
-      );
+      // console.log(
+      //   "📤 Subiendo archivo a Hostinger:",
+      //   file.name,
+      //   "Tipo:",
+      //   fileType,
+      // );
 
       // Crear FormData con key "file" (minúscula) como requiere el API
       const formData = new FormData();
@@ -93,14 +94,14 @@ export function useContent() {
         ? `${API_BASE_URL}/api/Hostinger/upload/image`
         : "/api/upload";
 
-      console.log("📡 Endpoint de upload:", uploadUrl);
-      console.log(
-        "🌍 Entorno:",
-        isDevelopment
-          ? "Desarrollo (directo al backend)"
-          : "Producción (via Vercel proxy)"
-      );
-      console.log('📦 FormData key: "file"');
+      // console.log("📡 Endpoint de upload:", uploadUrl);
+      // console.log(
+      //   "🌍 Entorno:",
+      //   isDevelopment
+      //     ? "Desarrollo (directo al backend)"
+      //     : "Producción (via Vercel proxy)",
+      // );
+      // console.log('📦 FormData key: "file"');
 
       const token = localStorage.getItem("authToken");
 
@@ -115,7 +116,7 @@ export function useContent() {
 
       if (response.ok) {
         const result: UploadResponse = await response.json();
-        console.log("✅ Archivo subido exitosamente:", result);
+        // console.log("✅ Archivo subido exitosamente:", result);
 
         setUploadProgress(100);
 
@@ -138,11 +139,17 @@ export function useContent() {
 
   // Obtener todos los contenidos
   const fetchAllContent = async () => {
+    if (contentCache.current["all"]) {
+      console.log("⚡ Usando contenidos en cache");
+      setContents(contentCache.current["all"]);
+      return contentCache.current["all"];
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log("📥 Obteniendo todos los contenidos...");
+      // console.log("📥 Obteniendo todos los contenidos...");
 
       const endpoint = `/api/proxy?path=Content/all`;
 
@@ -153,11 +160,13 @@ export function useContent() {
 
       if (response.ok) {
         const result = await response.json();
-        console.log("✅ Contenidos obtenidos:", result);
+        // console.log("✅ Contenidos obtenidos:", result);
 
         // La API devuelve { success, message, data }
         const contentsData = result.data || [];
         setContents(contentsData);
+        // Guardar en cache
+        contentCache.current["all"] = contentsData;
         return contentsData;
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -180,7 +189,7 @@ export function useContent() {
     setError(null);
 
     try {
-      console.log("🔄 Creando contenido:", contentData);
+      // console.log("🔄 Creando contenido:", contentData);
 
       const endpoint = `/api/proxy?path=Content/create`;
 
@@ -191,17 +200,17 @@ export function useContent() {
       });
 
       if (response.ok) {
-        console.log("✅ Contenido creado exitosamente");
+        // console.log("✅ Contenido creado exitosamente");
         await fetchAllContent(); // Recargar lista
         return true;
       } else {
         const errorData = await response.json().catch(() => ({}));
-        console.error("❌ Error al crear contenido:", errorData);
+        // console.error("❌ Error al crear contenido:", errorData);
         setError(errorData.message || "Error al crear contenido");
         return false;
       }
     } catch (error) {
-      console.error("Error creating content:", error);
+      // console.error("Error creating content:", error);
       setError("Error de conexión");
       return false;
     } finally {
@@ -212,7 +221,7 @@ export function useContent() {
   // Actualizar contenido existente
   const updateContent = async (
     contentId: string,
-    contentData: CreateContentData
+    contentData: CreateContentData,
   ) => {
     setIsLoading(true);
     setError(null);
@@ -276,7 +285,7 @@ export function useContent() {
         const errorData = await response.json().catch(() => ({}));
         console.error("❌ Error al eliminar contenido:", errorData);
         setError(
-          errorData.message || errorData.error || "Error al eliminar contenido"
+          errorData.message || errorData.error || "Error al eliminar contenido",
         );
         return false;
       }
