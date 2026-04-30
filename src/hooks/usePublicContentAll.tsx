@@ -101,7 +101,7 @@ interface UsePublicContentAllReturn {
  * @returns Contenido completo, categorías, secciones y funciones helper
  */
 export function usePublicContentAll(
-  countryCode: string
+  countryCode: string,
 ): UsePublicContentAllReturn {
   const [content, setContent] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -152,6 +152,7 @@ export function usePublicContentAll(
     const sectionMap = new Map<string, Section>();
 
     items.forEach((item) => {
+      if (item.section == null) return; // Saltar contenido sin sección
       if (!sectionMap.has(item.section.id)) {
         sectionMap.set(item.section.id, item.section);
       }
@@ -174,7 +175,7 @@ export function usePublicContentAll(
 
     try {
       console.log(
-        `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`
+        `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`,
       );
 
       // SIEMPRE usar el endpoint de Vercel (funciona tanto en local como en producción)
@@ -211,7 +212,7 @@ export function usePublicContentAll(
       console.log(
         `✅ Contenido COMPLETO cargado en TIEMPO REAL para ${countryCode}:`,
         activeContent.length,
-        "items"
+        "items",
       );
 
       // Extraer categorías y secciones únicas
@@ -230,7 +231,7 @@ export function usePublicContentAll(
         err instanceof Error ? err.message : "Error desconocido";
       console.error(
         `❌ Error al cargar contenido para ${countryCode}:`,
-        errorMessage
+        errorMessage,
       );
 
       // Si es un 404, significa que no hay contenido para este país (no es un error crítico)
@@ -272,7 +273,7 @@ export function usePublicContentAll(
     (categoryId: string): Category | undefined => {
       return categories.find((cat) => cat.id === categoryId);
     },
-    [categories]
+    [categories],
   );
 
   /**
@@ -282,7 +283,7 @@ export function usePublicContentAll(
     (sectionId: string): Section | undefined => {
       return sections.find((sec) => sec.id === sectionId);
     },
-    [sections]
+    [sections],
   );
 
   /**
@@ -293,7 +294,7 @@ export function usePublicContentAll(
     (categoryId: string): ContentItem[] => {
       return content.filter((item) => item.category.id === categoryId);
     },
-    [content]
+    [content],
   );
 
   /**
@@ -306,7 +307,7 @@ export function usePublicContentAll(
       const publicSections = sections.filter(
         (section) =>
           section.categoryId === categoryId &&
-          section.countries.includes(countryCode)
+          section.countries.includes(countryCode),
       );
 
       // Crear un Set con los IDs de secciones públicas para búsqueda rápida
@@ -315,11 +316,12 @@ export function usePublicContentAll(
       // Filtrar contenido que pertenece a secciones públicas
       return content.filter(
         (item) =>
+          item.section != null && // Asegurar que el contenido tenga sección asignada
           item.category.id === categoryId &&
-          publicSectionIds.has(item.section.id)
+          publicSectionIds.has(item.section.id),
       );
     },
-    [content, sections, countryCode]
+    [content, sections, countryCode],
   );
 
   /**
@@ -330,12 +332,12 @@ export function usePublicContentAll(
       return content
         .filter(
           (item) =>
-            item.category.id === categoryId && item.section.id === sectionId
+            item.category.id === categoryId && item.section.id === sectionId,
         )
         .slice()
         .sort((a, b) => a.orderIndex - b.orderIndex); // Ordenar por OrderIndex
     },
-    [content]
+    [content],
   );
 
   /**
@@ -347,10 +349,10 @@ export function usePublicContentAll(
       return sections.filter(
         (section) =>
           section.categoryId === categoryId &&
-          section.countries.includes(countryCode)
+          section.countries.includes(countryCode),
       );
     },
-    [sections, countryCode]
+    [sections, countryCode],
   );
 
   /**
