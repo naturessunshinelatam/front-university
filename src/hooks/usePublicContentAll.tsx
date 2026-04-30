@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 // Interfaz para el contenido completo de la API
 export interface ContentItem {
@@ -109,6 +109,8 @@ export function usePublicContentAll(
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const contentCache = useRef<{ [countryCode: string]: ContentItem[] }>({});
+
   /**
    * Verifica si el contenido está activo según fechas de publicación y expiración
    */
@@ -137,14 +139,7 @@ export function usePublicContentAll(
     const categoryMap = new Map<string, Category>();
 
     items.forEach((item) => {
-      // console.log("each category: ", item);
-      // if (item.category == null || item.category.id == null) {
-      //   console.warn(
-      //     `⚠️ Contenido con ID ${item.id} tiene categoría inválida:`,
-      //     item.category,
-      //   );
-      //   return; // Saltar este item si la categoría es inválida
-      // }
+      if (item.section == null) return; // Ignorar contenido de categoría existente pero sin sección asignada
       if (!categoryMap.has(item.category.id)) {
         categoryMap.set(item.category.id, item.category);
       }
@@ -174,91 +169,106 @@ export function usePublicContentAll(
    * Fetch del contenido completo desde la API - SIEMPRE EN TIEMPO REAL
    */
   const fetchContent = useCallback(async () => {
-    if (!countryCode) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // console.log(
-      //   `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`
-      // );
-
-      // SIEMPRE usar el endpoint de Vercel (funciona tanto en local como en producción)
-      // Vercel servirá /api/public-content.js automáticamente como serverless function
-      const endpoint = `/api/public-content?countryCode=${countryCode}`;
-
-      // console.log(`📡 Endpoint: ${endpoint}`);
-
-      const response = await fetch(endpoint, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data: ApiResponse = await response.json();
-
-      if (!data.success) {
-        throw new Error(data.message || "Error al obtener contenido");
-      }
-
-      // Filtrar solo contenido publicado y activo
-      const activeContent = (data.data || []).filter((item) => {
-        const isPublished = item.status === "Published";
-        const isActive = isContentActive(item);
-        return isPublished && isActive;
-      });
-
+    if (contentCache.current[countryCode]) {
       console.log(
-        `✅ Contenido COMPLETO cargado en TIEMPO REAL para ${countryCode}:`,
-        activeContent.length,
+        `⚡ Usando contenido en TIEMPO REAL desde cache para ${countryCode}:`,
+        contentCache.current[countryCode].length,
         "items",
       );
-      console.log("Active content: ", activeContent);
-      // Extraer categorías y secciones únicas
-      const extractedCategories = extractCategories(activeContent);
-      console.log(`📂 Categorías extraídas:`, extractedCategories.length);
-
-      const extractedSections = extractSections(activeContent);
-
-      console.log(`📋 Secciones extraídas:`, extractedSections.length);
-
-      setContent(activeContent);
-      setCategories(extractedCategories);
-      setSections(extractedSections);
-      setError(null);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      console.error(
-        `❌ Error al cargar contenido para ${countryCode}:`,
-        errorMessage,
-      );
-
-      // Si es un 404, significa que no hay contenido para este país (no es un error crítico)
-      if (errorMessage.includes("404")) {
-        console.log(`ℹ️ No hay contenido disponible para ${countryCode}`);
-        setError(null); // No mostrar como error
-        setContent([]);
-        setCategories([]);
-        setSections([]);
-      } else {
-        setError(errorMessage);
-        setContent([]);
-        setCategories([]);
-        setSections([]);
-      }
-    } finally {
+      setContent(contentCache.current[countryCode]);
+      setCategories(extractCategories(contentCache.current[countryCode]));
+      setSections(extractSections(contentCache.current[countryCode]));
       setLoading(false);
+      return;
+    } else {
+      if (!countryCode) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        // console.log(
+        //   `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`
+        // );
+
+        // SIEMPRE usar el endpoint de Vercel (funciona tanto en local como en producción)
+        // Vercel servirá /api/public-content.js automáticamente como serverless function
+        const endpoint = `/api/public-content?countryCode=${countryCode}`;
+
+        // console.log(`📡 Endpoint: ${endpoint}`);
+
+        const response = await fetch(endpoint, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const data: ApiResponse = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message || "Error al obtener contenido");
+        }
+
+        // Filtrar solo contenido publicado y activo
+        const activeContent = (data.data || []).filter((item) => {
+          const isPublished = item.status === "Published";
+          const isActive = isContentActive(item);
+          return isPublished && isActive;
+        });
+
+        console.log(
+          `✅ Contenido COMPLETO cargado en TIEMPO REAL para ${countryCode}:`,
+          activeContent.length,
+          "items",
+        );
+        console.log("Active content: ", activeContent);
+        // Extraer categorías y secciones únicas
+        const extractedCategories = extractCategories(activeContent);
+        console.log(`📂 Categorías extraídas:`, extractedCategories.length);
+
+        const extractedSections = extractSections(activeContent);
+
+        console.log(`📋 Secciones extraídas:`, extractedSections.length);
+
+        // Guardar en cache para este país (en tiempo real, sin expiración)
+        contentCache.current[countryCode] = activeContent;
+        setContent(activeContent);
+        setCategories(extractedCategories);
+        setSections(extractedSections);
+        setError(null);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Error desconocido";
+        console.error(
+          `❌ Error al cargar contenido para ${countryCode}:`,
+          errorMessage,
+        );
+
+        // Si es un 404, significa que no hay contenido para este país (no es un error crítico)
+        if (errorMessage.includes("404")) {
+          console.log(`ℹ️ No hay contenido disponible para ${countryCode}`);
+          setError(null); // No mostrar como error
+          setContent([]);
+          setCategories([]);
+          setSections([]);
+        } else {
+          setError(errorMessage);
+          setContent([]);
+          setCategories([]);
+          setSections([]);
+        }
+      } finally {
+        setLoading(false);
+      }
     }
   }, [countryCode, isContentActive, extractCategories, extractSections]);
 

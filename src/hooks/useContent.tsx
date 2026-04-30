@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "../config";
 
 interface Content {
@@ -55,6 +55,7 @@ export function useContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const contentCache = useRef<Record<string, Content[]>>({});
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem("authToken");
@@ -138,6 +139,12 @@ export function useContent() {
 
   // Obtener todos los contenidos
   const fetchAllContent = async () => {
+    if (contentCache.current["all"]) {
+      console.log("⚡ Usando contenidos en cache");
+      setContents(contentCache.current["all"]);
+      return contentCache.current["all"];
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -158,6 +165,8 @@ export function useContent() {
         // La API devuelve { success, message, data }
         const contentsData = result.data || [];
         setContents(contentsData);
+        // Guardar en cache
+        contentCache.current["all"] = contentsData;
         return contentsData;
       } else {
         const errorData = await response.json().catch(() => ({}));

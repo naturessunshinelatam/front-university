@@ -92,10 +92,10 @@ export default function AdminPanel() {
             icon: FolderPlus,
           },
           { id: "users", label: "Usuarios y Permisos", icon: Users },
-          { id: "analytics", label: "Analíticas", icon: BarChart3 },
+          // { id: "analytics", label: "Analíticas", icon: BarChart3 },
           {
-            id: "analytics-preview",
-            label: "Preview de Analítica",
+            id: "analytics",
+            label: "Analíticas",
             icon: BarChart3,
           },
           { id: "settings", label: "Configuración General", icon: Settings },
@@ -1612,9 +1612,9 @@ export default function AdminPanel() {
         return renderCategoryManagement();
       case "users":
         return renderUserManagement();
+      // case "analytics":
+      //   return renderAnalytics();
       case "analytics":
-        return renderAnalytics();
-      case "analytics-preview":
         return renderAnalyticsPreview();
       case "settings":
         return renderSettings();
