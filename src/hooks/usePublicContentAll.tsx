@@ -101,7 +101,7 @@ interface UsePublicContentAllReturn {
  * @returns Contenido completo, categorías, secciones y funciones helper
  */
 export function usePublicContentAll(
-  countryCode: string
+  countryCode: string,
 ): UsePublicContentAllReturn {
   const [content, setContent] = useState<ContentItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -137,6 +137,14 @@ export function usePublicContentAll(
     const categoryMap = new Map<string, Category>();
 
     items.forEach((item) => {
+      // console.log("each category: ", item);
+      // if (item.category == null || item.category.id == null) {
+      //   console.warn(
+      //     `⚠️ Contenido con ID ${item.id} tiene categoría inválida:`,
+      //     item.category,
+      //   );
+      //   return; // Saltar este item si la categoría es inválida
+      // }
       if (!categoryMap.has(item.category.id)) {
         categoryMap.set(item.category.id, item.category);
       }
@@ -152,6 +160,8 @@ export function usePublicContentAll(
     const sectionMap = new Map<string, Section>();
 
     items.forEach((item) => {
+      // console.log("each section: ", item.section);
+      if (item.section == null) return;
       if (!sectionMap.has(item.section.id)) {
         sectionMap.set(item.section.id, item.section);
       }
@@ -173,15 +183,15 @@ export function usePublicContentAll(
     setError(null);
 
     try {
-      console.log(
-        `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`
-      );
+      // console.log(
+      //   `🌍 Fetching contenido COMPLETO en TIEMPO REAL para país: ${countryCode}`
+      // );
 
       // SIEMPRE usar el endpoint de Vercel (funciona tanto en local como en producción)
       // Vercel servirá /api/public-content.js automáticamente como serverless function
       const endpoint = `/api/public-content?countryCode=${countryCode}`;
 
-      console.log(`📡 Endpoint: ${endpoint}`);
+      // console.log(`📡 Endpoint: ${endpoint}`);
 
       const response = await fetch(endpoint, {
         method: "GET",
@@ -211,14 +221,15 @@ export function usePublicContentAll(
       console.log(
         `✅ Contenido COMPLETO cargado en TIEMPO REAL para ${countryCode}:`,
         activeContent.length,
-        "items"
+        "items",
       );
-
+      console.log("Active content: ", activeContent);
       // Extraer categorías y secciones únicas
       const extractedCategories = extractCategories(activeContent);
+      console.log(`📂 Categorías extraídas:`, extractedCategories.length);
+
       const extractedSections = extractSections(activeContent);
 
-      console.log(`📂 Categorías extraídas:`, extractedCategories.length);
       console.log(`📋 Secciones extraídas:`, extractedSections.length);
 
       setContent(activeContent);
@@ -230,7 +241,7 @@ export function usePublicContentAll(
         err instanceof Error ? err.message : "Error desconocido";
       console.error(
         `❌ Error al cargar contenido para ${countryCode}:`,
-        errorMessage
+        errorMessage,
       );
 
       // Si es un 404, significa que no hay contenido para este país (no es un error crítico)
@@ -272,7 +283,7 @@ export function usePublicContentAll(
     (categoryId: string): Category | undefined => {
       return categories.find((cat) => cat.id === categoryId);
     },
-    [categories]
+    [categories],
   );
 
   /**
@@ -282,7 +293,7 @@ export function usePublicContentAll(
     (sectionId: string): Section | undefined => {
       return sections.find((sec) => sec.id === sectionId);
     },
-    [sections]
+    [sections],
   );
 
   /**
@@ -293,7 +304,7 @@ export function usePublicContentAll(
     (categoryId: string): ContentItem[] => {
       return content.filter((item) => item.category.id === categoryId);
     },
-    [content]
+    [content],
   );
 
   /**
@@ -306,7 +317,7 @@ export function usePublicContentAll(
       const publicSections = sections.filter(
         (section) =>
           section.categoryId === categoryId &&
-          section.countries.includes(countryCode)
+          section.countries.includes(countryCode),
       );
 
       // Crear un Set con los IDs de secciones públicas para búsqueda rápida
@@ -316,10 +327,11 @@ export function usePublicContentAll(
       return content.filter(
         (item) =>
           item.category.id === categoryId &&
-          publicSectionIds.has(item.section.id)
+          item.section != null &&
+          publicSectionIds.has(item.section.id),
       );
     },
-    [content, sections, countryCode]
+    [content, sections, countryCode],
   );
 
   /**
@@ -330,12 +342,14 @@ export function usePublicContentAll(
       return content
         .filter(
           (item) =>
-            item.category.id === categoryId && item.section.id === sectionId
+            item.section != null &&
+            item.category.id === categoryId &&
+            item.section.id === sectionId,
         )
         .slice()
         .sort((a, b) => a.orderIndex - b.orderIndex); // Ordenar por OrderIndex
     },
-    [content]
+    [content],
   );
 
   /**
@@ -347,10 +361,10 @@ export function usePublicContentAll(
       return sections.filter(
         (section) =>
           section.categoryId === categoryId &&
-          section.countries.includes(countryCode)
+          section.countries.includes(countryCode),
       );
     },
-    [sections, countryCode]
+    [sections, countryCode],
   );
 
   /**
