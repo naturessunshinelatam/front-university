@@ -155,8 +155,7 @@ export function usePublicContentAll(
     const sectionMap = new Map<string, Section>();
 
     items.forEach((item) => {
-      // console.log("each section: ", item.section);
-      if (item.section == null) return;
+      if (item.section == null) return; // Saltar contenido sin sección
       if (!sectionMap.has(item.section.id)) {
         sectionMap.set(item.section.id, item.section);
       }
@@ -336,6 +335,7 @@ export function usePublicContentAll(
       // Filtrar contenido que pertenece a secciones públicas
       return content.filter(
         (item) =>
+          item.section != null && // Asegurar que el contenido tenga sección asignada
           item.category.id === categoryId &&
           item.section != null &&
           publicSectionIds.has(item.section.id),
@@ -352,9 +352,7 @@ export function usePublicContentAll(
       return content
         .filter(
           (item) =>
-            item.section != null &&
-            item.category.id === categoryId &&
-            item.section.id === sectionId,
+            item.category.id === categoryId && item.section.id === sectionId,
         )
         .slice()
         .sort((a, b) => a.orderIndex - b.orderIndex); // Ordenar por OrderIndex
