@@ -1,11 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import SessionExpiredModal from '../components/SessionExpiredModal';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
+import SessionExpiredModal from "../components/SessionExpiredModal";
 
 interface User {
   id: string;
   name: string;
   email: string;
-  role: 'Admin' | 'ContentManager';
+  role: "Admin" | "ContentManager";
   roles: string[];
   countries: string[];
   accesibleCategories: string[];
@@ -22,21 +28,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // API Configuration - Usar proxy en desarrollo y producción
-const API_BASE_URL = '/api/proxy';
+const API_BASE_URL = "/api/proxy";
 
 // Función para decodificar JWT sin verificar la firma (solo para leer el payload)
 function decodeJWT(token: string) {
   try {
-    const parts = token.split('.');
+    const parts = token.split(".");
     if (parts.length !== 3) {
-      throw new Error('Token JWT inválido');
+      throw new Error("Token JWT inválido");
     }
-    
+
     const payload = parts[1];
-    const decoded = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    const decoded = JSON.parse(
+      atob(payload.replace(/-/g, "+").replace(/_/g, "/")),
+    );
     return decoded;
   } catch (error) {
-    console.error('Error decodificando JWT:', error);
+    console.error("Error decodificando JWT:", error);
     return null;
   }
 }
@@ -47,7 +55,7 @@ function isTokenExpired(token: string): boolean {
   if (!decoded || !decoded.exp) {
     return true; // Si no se puede decodificar o no tiene exp, considerarlo expirado
   }
-  
+
   const currentTime = Math.floor(Date.now() / 1000);
   return decoded.exp < currentTime;
 }
@@ -58,7 +66,7 @@ function getTimeUntilExpiration(token: string): number {
   if (!decoded || !decoded.exp) {
     return 0;
   }
-  
+
   const currentTime = Math.floor(Date.now() / 1000);
   const timeUntilExp = (decoded.exp - currentTime) * 1000; // Convertir a milisegundos
   return Math.max(0, timeUntilExp);
@@ -85,7 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Función para mostrar modal de sesión expirada
   const showSessionExpired = () => {
-    console.log('🚨 Token expirado - mostrando modal de sesión expirada');
+    console.log("🚨 Token expirado - mostrando modal de sesión expirada");
     setShowSessionExpiredModal(true);
   };
 
@@ -98,54 +106,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Función para configurar el logout automático
   const setupAutoLogout = (token: string) => {
     clearTimers();
-    
+
     const timeUntilExpiration = getTimeUntilExpiration(token);
-    console.log('⏰ Token expira en:', Math.floor(timeUntilExpiration / 1000 / 60), 'minutos');
-    
+    console.log(
+      "⏰ Token expira en:",
+      Math.floor(timeUntilExpiration / 1000 / 60),
+      "minutos",
+    );
+
     if (timeUntilExpiration > 0) {
       // Configurar logout automático 30 segundos antes de la expiración
       const logoutTime = Math.max(0, timeUntilExpiration - 30000);
-      
+
       logoutTimeoutRef.current = setTimeout(() => {
         showSessionExpired();
       }, logoutTime);
-      
+
       // Verificar el token cada 5 minutos
-      tokenCheckIntervalRef.current = setInterval(() => {
-        const currentToken = localStorage.getItem('authToken');
-        if (!currentToken || isTokenExpired(currentToken)) {
-          console.log('🚨 Token expirado detectado en verificación periódica');
-          showSessionExpired();
-        }
-      }, 5 * 60 * 1000); // 5 minutos
+      tokenCheckIntervalRef.current = setInterval(
+        () => {
+          const currentToken = localStorage.getItem("authToken");
+          if (!currentToken || isTokenExpired(currentToken)) {
+            console.log(
+              "🚨 Token expirado detectado en verificación periódica",
+            );
+            showSessionExpired();
+          }
+        },
+        5 * 60 * 1000,
+      ); // 5 minutos
     } else {
       // Token ya expirado
-      console.log('🚨 Token ya expirado - cerrando sesión inmediatamente');
+      console.log("🚨 Token ya expirado - cerrando sesión inmediatamente");
       showSessionExpired();
     }
   };
 
   useEffect(() => {
     // Check for existing session
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('authToken');
-    
+    const storedUser = localStorage.getItem("user");
+    const storedToken = localStorage.getItem("authToken");
+
     if (storedUser && storedToken) {
       try {
         // Verificar si el token ha expirado
         if (isTokenExpired(storedToken)) {
-          console.log('🚨 Token almacenado ha expirado - limpiando sesión');
-          localStorage.removeItem('user');
-          localStorage.removeItem('authToken');
+          console.log("🚨 Token almacenado ha expirado - limpiando sesión");
+          localStorage.removeItem("user");
+          localStorage.removeItem("authToken");
         } else {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
           setupAutoLogout(storedToken);
         }
       } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('user');
-        localStorage.removeItem('authToken');
+        console.error("Error parsing stored user:", error);
+        localStorage.removeItem("user");
+        localStorage.removeItem("authToken");
       }
     }
     setIsLoading(false);
@@ -158,85 +175,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
+
     try {
-      console.log('🔐 Iniciando login...');
-      console.log('📍 Endpoint:', `${API_BASE_URL}/Auth/login`);
-      
+      console.log("🔐 Iniciando login...");
+      console.log("📍 Endpoint:", `${API_BASE_URL}/Auth/login`);
+
       // Paso 1: Login para obtener token
       const loginResponse = await fetch(`${API_BASE_URL}?path=Auth/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({
           username: email,
-          password: password
-        })
+          password: password,
+        }),
       });
 
       if (!loginResponse.ok) {
-        console.error('❌ Login falló:', loginResponse.status);
+        console.error("❌ Login falló:", loginResponse.status);
         setIsLoading(false);
         return false;
       }
 
       const loginData = await loginResponse.json();
-      console.log('✅ Login exitoso');
-      console.log('📋 Respuesta completa:', JSON.stringify(loginData, null, 2));
-      console.log('📋 Tipo de respuesta:', Array.isArray(loginData) ? 'Array' : 'Object');
+      // console.log('✅ Login exitoso');
+      // console.log('📋 Respuesta completa:', JSON.stringify(loginData, null, 2));
+      // console.log('📋 Tipo de respuesta:', Array.isArray(loginData) ? 'Array' : 'Object');
 
       // Paso 2: Extraer token - análisis detallado de la estructura
       let accessToken: string | null = null;
-      
+
       // Buscar token en la estructura real de la API
       if (loginData.data?.acces_token) {
         // La API tiene un typo: "acces_token" en lugar de "access_token"
         accessToken = loginData.data.acces_token;
-        console.log('🔑 Token encontrado en data.acces_token (typo de la API)');
+        console.log("🔑 Token encontrado en data.acces_token (typo de la API)");
       } else if (loginData.data?.access_token) {
         accessToken = loginData.data.access_token;
-        console.log('🔑 Token encontrado en data.access_token');
+        console.log("🔑 Token encontrado en data.access_token");
       } else if (loginData.access_token) {
         accessToken = loginData.access_token;
-        console.log('🔑 Token encontrado en access_token');
+        console.log("🔑 Token encontrado en access_token");
       } else if (loginData.token) {
         accessToken = loginData.token;
-        console.log('🔑 Token encontrado en token');
+        console.log("🔑 Token encontrado en token");
       }
 
       if (!accessToken) {
-        console.error('❌ No se pudo extraer el token');
-        console.error('📋 Estructura completa analizada sin éxito');
+        console.error("❌ No se pudo extraer el token");
+        console.error("📋 Estructura completa analizada sin éxito");
         setIsLoading(false);
         return false;
       }
 
-      console.log('🔑 Token extraído exitosamente:', accessToken.substring(0, 50) + '...');
-      localStorage.setItem('authToken', accessToken);
+      // console.log(
+      //   "🔑 Token extraído exitosamente:",
+      //   accessToken.substring(0, 50) + "...",
+      // );
+      localStorage.setItem("authToken", accessToken);
 
       // Paso 3: Obtener lista de usuarios
-      console.log('👥 Obteniendo usuarios...');
+      console.log("👥 Obteniendo usuarios...");
       const usersResponse = await fetch(`${API_BASE_URL}?path=User`, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/json',
-        }
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
+        },
       });
 
       if (!usersResponse.ok) {
-        console.error('❌ Error obteniendo usuarios:', usersResponse.status);
+        console.error("❌ Error obteniendo usuarios:", usersResponse.status);
         const errorText = await usersResponse.text();
-        console.error('❌ Detalles del error:', errorText);
-        localStorage.removeItem('authToken');
+        console.error("❌ Detalles del error:", errorText);
+        localStorage.removeItem("authToken");
         setIsLoading(false);
         return false;
       }
 
       const users = await usersResponse.json();
-      console.log('✅ Usuarios obtenidos:', users.length, 'usuarios');
+      console.log("✅ Usuarios obtenidos:", users.length, "usuarios");
 
       // Paso 4: Encontrar usuario actual
       interface ApiUser {
@@ -249,67 +269,86 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         accesibleCategories?: string[];
         isActive?: boolean;
       }
-      
+
       const currentUser = users.find((u: ApiUser) => u.email === email);
       if (!currentUser) {
-        console.error('❌ Usuario no encontrado en la lista');
-        console.error('📧 Email buscado:', email);
-        console.error('📧 Emails disponibles:', users.map((u: ApiUser) => u.email));
-        localStorage.removeItem('authToken');
+        console.error("❌ Usuario no encontrado en la lista");
+        console.error("📧 Email buscado:", email);
+        console.error(
+          "📧 Emails disponibles:",
+          users.map((u: ApiUser) => u.email),
+        );
+        localStorage.removeItem("authToken");
         setIsLoading(false);
         return false;
       }
 
-      console.log('👤 Usuario encontrado:', currentUser.usernames || currentUser.email);
-      console.log('🎭 Roles del usuario:', currentUser.roles);
+      console.log(
+        "👤 Usuario encontrado:",
+        currentUser.usernames || currentUser.email,
+      );
+      console.log("🎭 Roles del usuario:", currentUser.roles);
 
       // Paso 5: Validar roles
       const userRoles = currentUser.roles || [];
-      const hasAdminRole = userRoles.includes('Admin');
-      const hasContentManagerRole = userRoles.includes('ContentManager');
+      const hasAdminRole = userRoles.includes("Admin");
+      const hasContentManagerRole = userRoles.includes("ContentManager");
 
       if (!hasAdminRole && !hasContentManagerRole) {
-        console.error('❌ Usuario sin roles válidos');
-        console.error('🎭 Roles actuales:', userRoles);
-        console.error('✅ Roles requeridos: Admin o ContentManager');
-        localStorage.removeItem('authToken');
+        console.error("❌ Usuario sin roles válidos");
+        console.error("🎭 Roles actuales:", userRoles);
+        console.error("✅ Roles requeridos: Admin o ContentManager");
+        localStorage.removeItem("authToken");
         setIsLoading(false);
         return false;
       }
 
       // Paso 6: Crear sesión de usuario
-      const userRole: 'Admin' | 'ContentManager' = hasAdminRole ? 'Admin' : 'ContentManager';
-      const validRoles = userRoles.filter((role: string) => 
-        role === 'Admin' || role === 'ContentManager'
+      const userRole: "Admin" | "ContentManager" = hasAdminRole
+        ? "Admin"
+        : "ContentManager";
+      const validRoles = userRoles.filter(
+        (role: string) => role === "Admin" || role === "ContentManager",
       );
 
       const loggedUser: User = {
         id: currentUser.id || Date.now().toString(),
-        name: currentUser.usernames || currentUser.name || email.split('@')[0],
+        name: currentUser.usernames || currentUser.name || email.split("@")[0],
         email: currentUser.email || email,
         role: userRole,
         roles: validRoles,
-        countries: currentUser.countries || ['MX', 'CO', 'EC', 'SV', 'GT', 'HN', 'DO', 'PA'],
-        accesibleCategories: currentUser.accesibleCategories || ['Productos', 'Compañía'],
-        isActive: currentUser.isActive !== false
+        countries: currentUser.countries || [
+          "MX",
+          "CO",
+          "EC",
+          "SV",
+          "GT",
+          "HN",
+          "DO",
+          "PA",
+        ],
+        accesibleCategories: currentUser.accesibleCategories || [
+          "Productos",
+          "Compañía",
+        ],
+        isActive: currentUser.isActive !== false,
       };
 
       setUser(loggedUser);
-      localStorage.setItem('user', JSON.stringify(loggedUser));
+      localStorage.setItem("user", JSON.stringify(loggedUser));
 
       // Configurar logout automático con el token
       setupAutoLogout(accessToken);
 
-      console.log('🎉 Login completado exitosamente');
-      console.log('👤 Usuario logueado:', loggedUser.name);
-      console.log('🎭 Rol asignado:', loggedUser.role);
+      console.log("🎉 Login completado exitosamente");
+      console.log("👤 Usuario logueado:", loggedUser.name);
+      console.log("🎭 Rol asignado:", loggedUser.role);
 
       setIsLoading(false);
       return true;
-
     } catch (error) {
-      console.error('🚨 Error durante el login:', error);
-      localStorage.removeItem('authToken');
+      console.error("🚨 Error durante el login:", error);
+      localStorage.removeItem("authToken");
       setIsLoading(false);
       return false;
     }
@@ -318,15 +357,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     clearTimers(); // Limpiar timers al hacer logout
     setUser(null);
-    localStorage.removeItem('user');
-    localStorage.removeItem('authToken');
-    console.log('👋 Usuario deslogueado');
+    localStorage.removeItem("user");
+    localStorage.removeItem("authToken");
+    console.log("👋 Usuario deslogueado");
   };
 
   return (
     <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
-      <SessionExpiredModal 
+      <SessionExpiredModal
         isOpen={showSessionExpiredModal}
         onConfirm={handleSessionExpiredConfirm}
       />
@@ -337,7 +376,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

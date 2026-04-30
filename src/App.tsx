@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ContentView from "./pages/ContentView";
 import AdminPanel from "./pages/AdminPanel";
+import AnalyticsPreview from "./pages/AnalyticsPreview";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CountryAlert from "./components/CountryAlert";
 import UnsupportedCountryModal from "./components/UnsupportedCountryModal";
@@ -49,6 +50,14 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="Admin">
                     <AdminPanel />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics-preview"
+                element={
+                  <ProtectedRoute requiredRole="Admin">
+                    <AnalyticsPreview />
                   </ProtectedRoute>
                 }
               />
