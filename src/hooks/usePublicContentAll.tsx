@@ -352,7 +352,9 @@ export function usePublicContentAll(
       return content
         .filter(
           (item) =>
-            item.category.id === categoryId && item.section.id === sectionId,
+            item.section != null && // Asegurar que el contenido tenga sección asignada
+            item.category.id === categoryId &&
+            item.section.id === sectionId,
         )
         .slice()
         .sort((a, b) => a.orderIndex - b.orderIndex); // Ordenar por OrderIndex
