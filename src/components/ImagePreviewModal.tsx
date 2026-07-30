@@ -1,12 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { X, Download, Loader2, ZoomIn, ZoomOut, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Download,
+  Loader2,
+  ZoomIn,
+  ZoomOut,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
 interface ImagePreviewModalProps {
-  imageId: string;
+  imageUrl: string;
   imageTitle: string;
   onClose: () => void;
-  onDownload: () => void;
+  onDownload: () => void | Promise<void>;
   onNext?: () => void;
   onPrevious?: () => void;
   hasNext?: boolean;
@@ -15,83 +24,53 @@ interface ImagePreviewModalProps {
   totalImages?: number;
 }
 
-export default function ImagePreviewModal({ 
-  imageId, 
-  imageTitle, 
-  onClose, 
+export default function ImagePreviewModal({
+  imageUrl,
+  imageTitle,
+  onClose,
   onDownload,
   onNext,
   onPrevious,
   hasNext = false,
   hasPrevious = false,
   currentIndex,
-  totalImages
+  totalImages,
 }: ImagePreviewModalProps) {
-  const [imageUrl, setImageUrl] = useState<string>('');
+  const [retryCount, setRetryCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   useEffect(() => {
-    loadImage();
-  }, [imageId]);
+    if (!imageUrl) {
+      setLoading(false);
+      setError("No se encontró la URL de la imagen");
+      return;
+    }
 
-  const loadImage = async () => {
     setLoading(true);
     setError(null);
+  }, [imageUrl, retryCount]);
 
-    try {
-      const token = localStorage.getItem('authToken');
-      
-      // Usar el proxy de Vercel en lugar de llamada directa al backend
-      const proxyUrl = `/api/proxy?path=Hostinger/getImage/${imageId}`;
-
-      const response = await fetch(proxyUrl, {
-        method: 'GET',
-        headers: {
-          'Authorization': token ? `Bearer ${token}` : '',
-          'Accept': 'application/json, image/*',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cargar la imagen');
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      setImageUrl(url);
-    } catch (err) {
-      console.error('Error loading image:', err);
-      setError('No se pudo cargar la imagen');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Limpiar URL cuando se desmonte el componente
-  useEffect(() => {
-    return () => {
-      if (imageUrl) {
-        URL.revokeObjectURL(imageUrl);
-      }
-    };
-  }, [imageUrl]);
+  const resolvedImageUrl =
+    retryCount === 0
+      ? imageUrl
+      : `${imageUrl}${imageUrl.includes("?") ? "&" : "?"}retry=${retryCount}`;
 
   // Cerrar con tecla ESC y navegar con flechas
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         onClose();
-      } else if (e.key === 'ArrowLeft' && hasPrevious && onPrevious) {
+      } else if (e.key === "ArrowLeft" && hasPrevious && onPrevious) {
         onPrevious();
-      } else if (e.key === 'ArrowRight' && hasNext && onNext) {
+      } else if (e.key === "ArrowRight" && hasNext && onNext) {
         onNext();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose, onNext, onPrevious, hasNext, hasPrevious]);
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -103,30 +82,30 @@ export default function ImagePreviewModal({
   const handleDownload = async () => {
     setIsDownloading(true);
     setDownloadSuccess(false);
-    
+
     try {
       // Ejecutar la descarga
-      onDownload();
-      
+      await onDownload();
+
       // Simular un pequeño delay para mostrar el estado de descarga
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Mostrar mensaje de éxito
       setDownloadSuccess(true);
-      
+
       // Ocultar mensaje después de 3 segundos
       setTimeout(() => {
         setDownloadSuccess(false);
       }, 3000);
     } catch (err) {
-      console.error('Error al descargar:', err);
+      console.error("Error al descargar:", err);
     } finally {
       setIsDownloading(false);
     }
   };
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
     >
@@ -140,7 +119,7 @@ export default function ImagePreviewModal({
               {imageTitle}
             </h3>
           </div>
-          
+
           {/* Controles - Fila separada en móvil */}
           <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 lg:pt-0">
             {/* Zoom Controls - Ahora controlados por TransformWrapper */}
@@ -151,7 +130,7 @@ export default function ImagePreviewModal({
                 </p>
               </div>
             )}
-            
+
             {/* Right Controls */}
             <div className="flex items-center gap-1 sm:gap-2">
               {/* Download Button */}
@@ -167,7 +146,7 @@ export default function ImagePreviewModal({
                   <Download className="w-4 h-4 sm:w-5 sm:h-5" />
                 )}
               </button>
-              
+
               {/* Close Button */}
               <button
                 onClick={onClose}
@@ -181,9 +160,12 @@ export default function ImagePreviewModal({
         </div>
 
         {/* Image Container */}
-        <div className="relative bg-gray-100" style={{ height: 'calc(90vh - 140px)' }}>
+        <div
+          className="relative bg-gray-100"
+          style={{ height: "calc(90vh - 140px)" }}
+        >
           {loading && (
-            <div className="flex flex-col items-center justify-center h-full">
+            <div className="absolute inset-0 z-20 flex flex-col items-center justify-center h-full bg-gray-100/90">
               <Loader2 className="w-12 h-12 text-[#124C45] animate-spin mb-4" />
               <p className="text-gray-600">Cargando imagen...</p>
             </div>
@@ -197,7 +179,11 @@ export default function ImagePreviewModal({
                 <p className="text-sm">{error}</p>
               </div>
               <button
-                onClick={loadImage}
+                onClick={() => {
+                  setRetryCount((value) => value + 1);
+                  setError(null);
+                  setLoading(true);
+                }}
                 className="mt-4 px-4 py-2 bg-[#124C45] text-white rounded-lg hover:bg-[#0f3d37] transition-colors"
               >
                 Reintentar
@@ -205,7 +191,7 @@ export default function ImagePreviewModal({
             </div>
           )}
 
-          {!loading && !error && imageUrl && (
+          {!error && imageUrl && (
             <TransformWrapper
               initialScale={1}
               minScale={0.5}
@@ -245,22 +231,30 @@ export default function ImagePreviewModal({
 
                   <TransformComponent
                     wrapperStyle={{
-                      width: '100%',
-                      height: '100%',
-                      cursor: 'grab'
+                      width: "100%",
+                      height: "100%",
+                      cursor: "grab",
                     }}
                     contentStyle={{
-                      width: '100%',
-                      height: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
+                      width: "100%",
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                     }}
                   >
                     <img
-                      src={imageUrl}
+                      src={resolvedImageUrl}
                       alt={imageTitle}
                       className="rounded-lg shadow-lg max-w-full max-h-full object-contain"
+                      onLoad={() => {
+                        setLoading(false);
+                        setError(null);
+                      }}
+                      onError={() => {
+                        setLoading(false);
+                        setError("No se pudo cargar la imagen");
+                      }}
                       draggable={false}
                     />
                   </TransformComponent>
@@ -280,7 +274,7 @@ export default function ImagePreviewModal({
                 className="fixed left-4 sm:left-8 top-1/2 transform -translate-y-1/2 z-50 bg-black/60 hover:bg-black/80 text-white p-3 sm:p-4 rounded-full transition-all duration-200 backdrop-blur-md shadow-2xl border border-white/20"
                 title="Imagen anterior (←)"
                 style={{
-                  left: 'max(1rem, calc((100vw - 1536px) / 2 + 1rem))'
+                  left: "max(1rem, calc((100vw - 1536px) / 2 + 1rem))",
                 }}
               >
                 <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -294,7 +288,7 @@ export default function ImagePreviewModal({
                 className="fixed right-4 sm:right-8 top-1/2 transform -translate-y-1/2 z-50 bg-black/60 hover:bg-black/80 text-white p-3 sm:p-4 rounded-full transition-all duration-200 backdrop-blur-md shadow-2xl border border-white/20"
                 title="Siguiente imagen (→)"
                 style={{
-                  right: 'max(1rem, calc((100vw - 1536px) / 2 + 1rem))'
+                  right: "max(1rem, calc((100vw - 1536px) / 2 + 1rem))",
                 }}
               >
                 <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7" />
@@ -308,17 +302,23 @@ export default function ImagePreviewModal({
           <div className="p-3 bg-gray-50 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <p className="text-xs text-gray-500 flex-1">
-                <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">ESC</kbd> cerrar
+                <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">
+                  ESC
+                </kbd>{" "}
+                cerrar
                 {(hasNext || hasPrevious) && (
                   <>
-                    {' • '}
-                    <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">←</kbd>
-                    {' '}
-                    <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">→</kbd>
-                    {' '}navegar
+                    {" • "}
+                    <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">
+                      ←
+                    </kbd>{" "}
+                    <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs">
+                      →
+                    </kbd>{" "}
+                    navegar
                   </>
                 )}
-                {' • Arrastra para mover'}
+                {" • Arrastra para mover"}
               </p>
               {currentIndex !== undefined && totalImages !== undefined && (
                 <p className="text-xs text-gray-600 font-medium ml-2">
@@ -337,8 +337,12 @@ export default function ImagePreviewModal({
                 <CheckCircle className="w-6 h-6 animate-in zoom-in duration-300" />
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-sm sm:text-base">¡Descarga exitosa!</p>
-                <p className="text-xs sm:text-sm opacity-90">La imagen se ha descargado correctamente</p>
+                <p className="font-semibold text-sm sm:text-base">
+                  ¡Descarga exitosa!
+                </p>
+                <p className="text-xs sm:text-sm opacity-90">
+                  La imagen se ha descargado correctamente
+                </p>
               </div>
               <button
                 onClick={() => setDownloadSuccess(false)}

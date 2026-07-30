@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CountryProvider } from "./contexts/CountryContext";
+import { PublicContentCacheProvider } from "./contexts/PublicContentCacheContext";
 import { AlertProvider } from "./components/AlertSystem";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -20,54 +21,56 @@ function App() {
   return (
     <AuthProvider>
       <CountryProvider>
-        <AlertProvider>
-          <div className="min-h-screen bg-white">
-            {/* Modales en orden de prioridad */}
-            {/* 1. Modal de país no soportado (prioridad máxima) */}
-            <UnsupportedCountryModal />
+        <PublicContentCacheProvider>
+          <AlertProvider>
+            <div className="min-h-screen bg-white">
+              {/* Modales en orden de prioridad */}
+              {/* 1. Modal de país no soportado (prioridad máxima) */}
+              <UnsupportedCountryModal />
 
-            {/* 2. Modal de políticas de privacidad (si país soportado y requiere políticas) */}
-            <PrivacyPolicyModal />
+              {/* 2. Modal de políticas de privacidad (si país soportado y requiere políticas) */}
+              <PrivacyPolicyModal />
 
-            {/* 3. Alerta de cambio de país (cambio manual) */}
-            <CountryAlert />
+              {/* 3. Alerta de cambio de país (cambio manual) */}
+              <CountryAlert />
 
-            {/* Navegación y contenido */}
-            <Navigation />
-            <Routes>
-              <Route path="/" element={<HomeWithContact />} />
-              <Route path="/login" element={<Login />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requiredRole="Admin">
-                    <AdminPanel />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/analytics-preview"
-                element={
-                  <ProtectedRoute requiredRole="Admin">
-                    <AnalyticsPreview />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/content/:category/:section?"
-                element={<ContentView />}
-              />
-            </Routes>
-          </div>
-        </AlertProvider>
+              {/* Navegación y contenido */}
+              <Navigation />
+              <Routes>
+                <Route path="/" element={<HomeWithContact />} />
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requiredRole="Admin">
+                      <AdminPanel />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin/analytics-preview"
+                  element={
+                    <ProtectedRoute requiredRole="Admin">
+                      <AnalyticsPreview />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/content/:category/:section?"
+                  element={<ContentView />}
+                />
+              </Routes>
+            </div>
+          </AlertProvider>
+        </PublicContentCacheProvider>
       </CountryProvider>
     </AuthProvider>
   );

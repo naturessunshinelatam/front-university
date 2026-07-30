@@ -65,16 +65,16 @@ export default function ContentView() {
 
   const [selectedVideo, setSelectedVideo] = useState<ContentItem | null>(null);
   const [downloadingImageId, setDownloadingImageId] = useState<string | null>(
-    null
+    null,
   );
   const [previewImage, setPreviewImage] = useState<ContentItem | null>(null);
   const [downloadedImageId, setDownloadedImageId] = useState<string | null>(
-    null
+    null,
   );
 
   // Estado para controlar secciones expandidas/contraídas
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [allCollapsed, setAllCollapsed] = useState(false);
 
@@ -112,7 +112,7 @@ export default function ContentView() {
   console.log("🔍 ContentView - Total secciones:", sections.length);
   console.log(
     "🔍 ContentView - Secciones de esta categoría:",
-    availableSections.length
+    availableSections.length,
   );
   console.log(`Get SectionsbyCategory: ${{ availableSections }}`);
 
@@ -127,7 +127,7 @@ export default function ContentView() {
       const sectionContent = getContentBySection(category, section.id);
 
       console.log(
-        `📋 ContentView - Sección "${section.sectionName}" tiene ${sectionContent.length} contenidos`
+        `📋 ContentView - Sección "${section.sectionName}" tiene ${sectionContent.length} contenidos`,
       );
 
       return {
@@ -141,16 +141,16 @@ export default function ContentView() {
             item.contentType.toLowerCase() === "video"
               ? "youtube"
               : item.contentType.toLowerCase() === "file"
-              ? "pdf"
-              : item.contentType.toLowerCase() === "image"
-              ? "image"
-              : (item.contentType.toLowerCase() as
-                  | "video"
-                  | "pdf"
-                  | "link"
-                  | "youtube"
-                  | "file"
-                  | "image"),
+                ? "pdf"
+                : item.contentType.toLowerCase() === "image"
+                  ? "image"
+                  : (item.contentType.toLowerCase() as
+                      | "video"
+                      | "pdf"
+                      | "link"
+                      | "youtube"
+                      | "file"
+                      | "image"),
           url: item.contentUrl,
           description: item.description,
           duration: item.size, // En la API, size puede ser duración para videos
@@ -166,11 +166,11 @@ export default function ContentView() {
   };
 
   const sectionsWithContent = buildContentData().filter(
-    (section) => section.items.length > 0
+    (section) => section.items.length > 0,
   );
 
   console.log(
-    `📋 ContentView - Secciones con contenido: ${sectionsWithContent.length}`
+    `📋 ContentView - Secciones con contenido: ${sectionsWithContent.length}`,
   );
 
   /**
@@ -222,6 +222,23 @@ export default function ContentView() {
       "historias-exito": "🏆",
     };
     return iconMap[sectionId] || "📋";
+  };
+
+  const getImageFileIdFromUrl = (imageUrl: string): string | null => {
+    if (!imageUrl) {
+      return null;
+    }
+
+    const fileName = imageUrl.split("/").pop() || "";
+    const cleanFileName = fileName.split("?")[0];
+
+    const guidFileMatch = cleanFileName.match(/^(.+?)_file(?:\.[^.]+)?$/i);
+    if (guidFileMatch?.[1]) {
+      return guidFileMatch[1];
+    }
+
+    const fallback = cleanFileName.split("_")[0];
+    return fallback || null;
   };
 
   /**
@@ -453,11 +470,11 @@ export default function ContentView() {
                                   item.type === "pdf" || item.type === "file"
                                     ? "bg-red-100 text-red-600"
                                     : item.type === "youtube" ||
-                                      item.type === "video"
-                                    ? "bg-red-100 text-red-600"
-                                    : item.type === "image"
-                                    ? "bg-purple-100 text-purple-600"
-                                    : "bg-blue-100 text-blue-600"
+                                        item.type === "video"
+                                      ? "bg-red-100 text-red-600"
+                                      : item.type === "image"
+                                        ? "bg-purple-100 text-purple-600"
+                                        : "bg-blue-100 text-blue-600"
                                 }`}
                               >
                                 <IconComponent className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -488,13 +505,10 @@ export default function ContentView() {
                             {/* Botones para imágenes */}
                             {item.type === "image" &&
                               (() => {
-                                // Extraer el ID del archivo de la URL
-                                const urlParts = item.url.split("/");
-                                const fileNameWithExtension =
-                                  urlParts[urlParts.length - 1];
-                                const fileId =
-                                  fileNameWithExtension.split("_")[0];
-                                const downloadUrl = `/api/proxy?path=Hostinger/getImage/${fileId}`;
+                                const fileId = getImageFileIdFromUrl(item.url);
+                                const downloadUrl = fileId
+                                  ? `/api/proxy?path=Hostinger/getImage/${fileId}`
+                                  : null;
                                 const isDownloading =
                                   downloadingImageId === item.id;
 
@@ -516,6 +530,9 @@ export default function ContentView() {
                                     <button
                                       onClick={async (e) => {
                                         e.stopPropagation();
+                                        if (!downloadUrl) {
+                                          return;
+                                        }
                                         setDownloadingImageId(item.id);
 
                                         try {
@@ -529,7 +546,7 @@ export default function ContentView() {
                                                   ? `Bearer ${token}`
                                                   : "",
                                               },
-                                            }
+                                            },
                                           );
 
                                           if (response.ok) {
@@ -553,19 +570,22 @@ export default function ContentView() {
                                         } catch (error) {
                                           console.error(
                                             "Error al descargar:",
-                                            error
+                                            error,
                                           );
                                         } finally {
                                           setDownloadingImageId(null);
                                         }
                                       }}
                                       className="w-7 h-7 sm:w-8 sm:h-8 rounded-md bg-[#124C45] hover:bg-[#0f3d37] text-white flex items-center justify-center transition-colors shadow-sm hover:shadow-md relative"
+                                      disabled={!downloadUrl || isDownloading}
                                       title={
-                                        isDownloading
-                                          ? "Descargando..."
-                                          : downloadedImageId === item.id
-                                          ? "¡Descargado!"
-                                          : "Descargar imagen"
+                                        !downloadUrl
+                                          ? "No se pudo obtener el ID de la imagen"
+                                          : isDownloading
+                                            ? "Descargando..."
+                                            : downloadedImageId === item.id
+                                              ? "¡Descargado!"
+                                              : "Descargar imagen"
                                       }
                                     >
                                       {isDownloading ? (
@@ -679,20 +699,17 @@ export default function ContentView() {
       {/* Image Preview Modal */}
       {previewImage &&
         (() => {
-          // Extraer el ID del archivo de la URL para el modal
-          const urlParts = previewImage.url.split("/");
-          const fileNameWithExtension = urlParts[urlParts.length - 1];
-          const fileId = fileNameWithExtension.split("_")[0];
+          const fileId = getImageFileIdFromUrl(previewImage.url);
 
           // Obtener todas las imágenes de la sección actual
           const currentSection = sectionsWithContent.find((section) =>
-            section.items.some((item) => item.id === previewImage.id)
+            section.items.some((item) => item.id === previewImage.id),
           );
 
           const imagesInSection =
             currentSection?.items.filter((item) => item.type === "image") || [];
           const currentImageIndex = imagesInSection.findIndex(
-            (item) => item.id === previewImage.id
+            (item) => item.id === previewImage.id,
           );
           const hasNext = currentImageIndex < imagesInSection.length - 1;
           const hasPrevious = currentImageIndex > 0;
@@ -711,11 +728,14 @@ export default function ContentView() {
 
           return (
             <ImagePreviewModal
-              imageId={fileId}
+              imageUrl={previewImage.url}
               imageTitle={previewImage.title}
               onClose={() => setPreviewImage(null)}
               onDownload={async () => {
-                // Extraer el ID y descargar con nombre correcto
+                if (!fileId) {
+                  return;
+                }
+
                 const downloadUrl = `/api/proxy?path=Hostinger/getImage/${fileId}`;
                 try {
                   const token = localStorage.getItem("authToken");
